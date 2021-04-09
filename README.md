@@ -8,7 +8,6 @@ Featuring ICMP scan and ARP scan, PSScanner can scan the whole network in a few 
 Logon user and serial number: Run the script with a domain admin account which has admin right on all domain computers.
 
 Contributions : Pull requests and/or suggestions are more than welcome.
-Logon user and SerialNumber: Must run the script with a domain admin account, which has admin right on all domain computers
 
 Screenshot:
 ![image](https://user-images.githubusercontent.com/57880343/114135249-d41f6400-98bd-11eb-90d7-89b1da6fb461.png)
