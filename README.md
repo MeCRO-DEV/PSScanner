@@ -11,3 +11,4 @@ Contributions : Pull requests and/or suggestions are more than welcome.
 
 Screenshot:
 ![image](https://user-images.githubusercontent.com/57880343/114135249-d41f6400-98bd-11eb-90d7-89b1da6fb461.png)
+Due to scanning WAN IP, this screenshot only shows IP address.
