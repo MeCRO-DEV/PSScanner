@@ -10,4 +10,4 @@ Contributions : Pull requests and/or suggestions are more than welcome.
 Logon user and SerialNumber: Must run the script with a domain admin account, which has admin right on all domain computers
 
 Screenshot:
-![image](https://user-images.githubusercontent.com/57880343/114134046-e3051700-98bb-11eb-9ca4-3cff98502e9c.png)
+![image](https://user-images.githubusercontent.com/57880343/114135249-d41f6400-98bd-11eb-90d7-89b1da6fb461.png)
