@@ -5,7 +5,7 @@ It is a WPF application written in Powershell; it depents on PSParallel module f
 
 Featuring ICMP scan and ARP scan, PSScanner can scan the whole network in a few minutes.
 
-Logon user and serial number: Run the script with a domain admin account which has admin right on all demain computers.
+Logon user and serial number: Run the script with a domain admin account which has admin right on all domain computers.
 
 Contributions : Pull requests and/or suggestions are more than welcome.
 Logon user and SerialNumber: Must run the script with a domain admin account, which has admin right on all domain computers
