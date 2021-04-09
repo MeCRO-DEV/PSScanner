@@ -4,6 +4,7 @@ PSScanner is made for IT administrators to scan corporate network, showing IP ad
 It is a WPF application written in Powershell; it depents on PSParallel module for multi-threaded scan.
 
 Featuring ICMP scan and ARP scan, PSScanner can scan the whole network in a few minutes.
+
 Logon user and serial number: Run the script with a domain admin account which has admin right on all demain computers.
 
 Contributions : Pull requests and/or suggestions are more than welcome.
