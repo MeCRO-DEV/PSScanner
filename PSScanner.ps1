@@ -1,7 +1,7 @@
 ﻿##########################################################
 # PSScanner
 # ---------
-# Author: David Wang, Apr 2021
+# Author: David Wang, Apr 2021 -V1.0
 # Dependency: PSParallel (By Staffan Gustafsson)
 # https://github.com/powercode/PSParallel
 #
@@ -104,7 +104,7 @@
             </Style>
         </Window.Resources>
         <Grid Background="DarkCyan" HorizontalAlignment="Left" Width="1024">
-            <TextBox x:Name="TB_IPAddress" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="4,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center"/>
+            <TextBox x:Name="TB_IPAddress" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="4,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center" ToolTip="Any IP in the target subnet"/>
             <TextBlock IsHitTestVisible="False" Text="IP Address" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="12,10,0,0" Foreground="DarkGray">
                 <TextBlock.Style>
                     <Style TargetType="{x:Type TextBlock}">
@@ -117,8 +117,8 @@
                     </Style>
                 </TextBlock.Style>
             </TextBlock>
-            <TextBox x:Name="TB_NetMask" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="206,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center"/>
-            <TextBlock IsHitTestVisible="False" Text="Network Mask" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" Foreground="DarkGray">
+            <TextBox x:Name="TB_NetMask" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="206,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center" ToolTip="Minimum [255.255.0.0]"/>
+            <TextBlock IsHitTestVisible="False" Text="Subnet Mask" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" Foreground="DarkGray">
                 <TextBlock.Style>
                     <Style TargetType="{x:Type TextBlock}">
                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -130,7 +130,7 @@
                     </Style>
                 </TextBlock.Style>
             </TextBlock>
-            <TextBox x:Name="TB_CIDR" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="408,4,0,0" VerticalAlignment="Top" Width="50" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="2" Background="LightYellow" TextAlignment="Center"/>
+            <TextBox x:Name="TB_CIDR" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="408,4,0,0" VerticalAlignment="Top" Width="50" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="2" Background="LightYellow" TextAlignment="Center" ToolTip="CIDR [16-31]"/>
             <TextBlock IsHitTestVisible="False" Text="CIDR" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="412,10,0,0" Foreground="DarkGray">
                 <TextBlock.Style>
                     <Style TargetType="{x:Type TextBlock}">
@@ -143,7 +143,7 @@
                     </Style>
                 </TextBlock.Style>
             </TextBlock>
-            <TextBox x:Name="TB_Threshold" Text="50" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="460,4,0,0" VerticalAlignment="Top" Width="60" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="3" Background="LightYellow" TextAlignment="Center"/>
+            <TextBox x:Name="TB_Threshold" Text="50" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="460,4,0,0" VerticalAlignment="Top" Width="60" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="3" Background="LightYellow" TextAlignment="Center" ToolTip="Runspace capacity [16-128]"/>
             <TextBlock IsHitTestVisible="False" Text="Threshold" FontFamily="Courier New" FontSize="10" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="462,14,0,0" Foreground="DarkGray">
                 <TextBlock.Style>
                     <Style TargetType="{x:Type TextBlock}">
@@ -156,23 +156,12 @@
                     </Style>
                 </TextBlock.Style>
             </TextBlock>
-            <RadioButton x:Name="RB_Mask" Content="Mask" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="522,10,0,0" VerticalAlignment="Top" Width="70" Foreground="Cyan"/>
-            <RadioButton x:Name="RB_CIDR" Content="CIDR" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="594,10,0,0" VerticalAlignment="Top" Width="70" Foreground="Cyan"/>
-            <CheckBox x:Name="CB_More" Content="More" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="666,10,0,0"  VerticalAlignment="Top" Width="70" Foreground="Lime"/>
-            <CheckBox x:Name="CB_ARP" Content="ARP" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="738,10,0,0"  VerticalAlignment="Top" Width="70" Foreground="DarkOrange"/>
-            <TextBox x:Name="TB_Delay" Text="0" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="798,4,0,0" VerticalAlignment="Top" Width="50" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="1" Background="LightYellow" TextAlignment="Center"/>
-            <TextBlock IsHitTestVisible="False" Text="Delay" FontFamily="Courier New" FontSize="14" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="802,10,0,0" Foreground="DarkGray">
-                <TextBlock.Style>
-                    <Style TargetType="{x:Type TextBlock}">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Text, ElementName=TB_Delay}" Value="">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
+            <RadioButton x:Name="RB_Mask" Content="Mask" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="522,10,0,0" VerticalAlignment="Top" Width="70" Foreground="Cyan" ToolTip="Use subnet mask"/>
+            <RadioButton x:Name="RB_CIDR" Content="CIDR" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="594,10,0,0" VerticalAlignment="Top" Width="70" Foreground="Cyan" ToolTip="Use CIDR"/>
+            <CheckBox x:Name="CB_More" Content="More" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="666,10,0,0"  VerticalAlignment="Top" Width="70" Foreground="Lime" ToolTip="Show logon user and serial number"/>
+            <CheckBox x:Name="CB_ARP" Content="ARP" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="738,10,0,0"  VerticalAlignment="Top" Width="70" Foreground="DarkOrange" ToolTip="Use ARP request"/>
+            <TextBox x:Name="TB_Delay" Text="0" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="798,4,0,0" VerticalAlignment="Top" Width="27" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="1" Background="LightYellow" TextAlignment="Center" ToolTip="ARP Ping Delay (0-9ms)"/>
+            <CheckBox x:Name="CB_CC" Content="" FontFamily="Courier New" FontSize="40" HorizontalAlignment="Left" Height="60" Margin="830,10,0,0"  VerticalAlignment="Top" Width="60" Foreground="DarkOrange" ToolTip="Clear ARP cache before scanning"/>
             <Button x:Name="BTN_Scan" Content="Scan" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="851,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnLime}"/>
             <Button x:Name="BTN_Exit" Content="Exit" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="913,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnBrown}"/>
             <Button x:Name="BTN_About" Content="" FontFamily="Courier New" FontSize="15" HorizontalAlignment="Left" Height="30" Margin="975,4,0,0" VerticalAlignment="Top" Width="35" Foreground="Yellow" Style="{StaticResource btnGreen}"/>
@@ -225,6 +214,8 @@ $syncHash.Gui.RB_Mask.IsChecked = $false
 $syncHash.Gui.TB_NetMask.IsEnabled = $false
 $syncHash.GUI.TB_Delay.IsEnabled = $false
 $syncHash.Gui.BTN_About.Content = "$emoji_about"
+$syncHash.Gui.CB_CC.IsEnabled    = $false
+$syncHash.Gui.CB_CC.IsChecked    = $true
 $syncHash.Gui.SB.Text = $env:USERDNSDOMAIN + '\' + $env:USERNAME + ' | ' + $env:COMPUTERNAME + ' | ' + $env:NUMBER_OF_PROCESSORS + ' CPU Core(s)'
 
 # create the runspace pool and pass the $syncHash variable through
@@ -330,8 +321,10 @@ $syncHash.GUI.RB_CIDR.Add_Click({
 $syncHash.GUI.CB_ARP.Add_Click({
     if($syncHash.GUI.CB_ARP.isChecked){
         $syncHash.GUI.TB_Delay.IsEnabled = $true
+        $syncHash.Gui.CB_CC.IsEnabled    = $true
     } else {
         $syncHash.GUI.TB_Delay.IsEnabled = $false
+        $syncHash.Gui.CB_CC.IsEnabled    = $false
     }
 })
 
@@ -340,10 +333,6 @@ $syncHash.Gui.TB_IPAddress.Add_TextChanged({
     if ($this.Text -match '[^0-9.]') {
         $cursorPos = $this.SelectionStart
         $this.Text = $this.Text -replace '[^0-9.]',''
-        # move the cursor to the end of the text:
-        # $this.SelectionStart = $this.Text.Length
-
-        # or leave the cursor where it was before the replace
         $this.SelectionStart = $cursorPos - 1
         $this.SelectionLength = 0
     }
@@ -354,10 +343,6 @@ $syncHash.Gui.TB_NetMask.Add_TextChanged({
     if ($this.Text -match '[^0-9.]') {
         $cursorPos = $this.SelectionStart
         $this.Text = $this.Text -replace '[^0-9.]',''
-        # move the cursor to the end of the text:
-        #$this.SelectionStart = $this.Text.Length
-
-        # or leave the cursor where it was before the replace
         $this.SelectionStart = $cursorPos - 1
         $this.SelectionLength = 0
     }
@@ -368,10 +353,6 @@ $syncHash.Gui.TB_Threshold.Add_TextChanged({
     if ($this.Text -match '[^0-9]') {
         $cursorPos = $this.SelectionStart
         $this.Text = $this.Text -replace '[^0-9]',''
-        # move the cursor to the end of the text:
-        # $this.SelectionStart = $this.Text.Length
-
-        # or leave the cursor where it was before the replace
         $this.SelectionStart = $cursorPos - 1
         $this.SelectionLength = 0
     }
@@ -382,10 +363,6 @@ $syncHash.Gui.TB_Delay.Add_TextChanged({
     if ($this.Text -match '[^0-9]') {
         $cursorPos = $this.SelectionStart
         $this.Text = $this.Text -replace '[^0-9]',''
-        # move the cursor to the end of the text:
-        # $this.SelectionStart = $this.Text.Length
-
-        # or leave the cursor where it was before the replace
         $this.SelectionStart = $cursorPos - 1
         $this.SelectionLength = 0
     }
@@ -544,9 +521,11 @@ $syncHash.updateBlock = {
         $syncHash.Gui.BTN_About.IsEnabled    = $true
         $syncHash.Gui.BTN_Exit.IsEnabled     = $true
         if($syncHash.Gui.CB_ARP.isChecked){
-            $syncHash.Gui.TB_Delay.IsEnabled      = $true
+            $syncHash.Gui.TB_Delay.IsEnabled = $true
+            $syncHash.Gui.CB_CC.IsEnabled    = $true
         } else {
-            $syncHash.Gui.TB_Delay.IsEnabled      = $false
+            $syncHash.Gui.TB_Delay.IsEnabled = $false
+            $syncHash.Gui.CB_CC.IsEnabled    = $false
         }
 
         if(!(isThreadRunning)){ $syncHash.Gui.PB.IsIndeterminate = $false }
@@ -577,37 +556,35 @@ Function Test-IPAddress {
 }
 
 # Subnet mask validation
-function ValidateSubnetMask ($strSubnetMask)
+function CheckSubnetMask ($SubnetMask)
 {
-	$bValidMask = $true
-	$arrSections = @()
-	$arrSections +=$strSubnetMask.split(".")
-	#firstly, make sure there are 4 sections in the subnet mask
-	if ($arrSections.count -ne 4) {$bValidMask =$false}
+	$IsValid = $true
+	$MaskParts = @()
+	$MaskParts +=$SubnetMask.split(".")
+
+	if ($MaskParts.count -ne 4) {$IsValid =$false}
 	
-	#secondly, make sure it only contains numbers and it's between 0-255
-	if ($bValidMask)
+	if ($IsValid)
 	{
 		[reflection.assembly]::LoadWithPartialName("'Microsoft.VisualBasic") | Out-Null
-		foreach ($item in $arrSections)
+		foreach ($item in $MaskParts)
 		{
-			if (!([Microsoft.VisualBasic.Information]::isnumeric($item))) {$bValidMask = $false}
+			if (!([Microsoft.VisualBasic.Information]::isnumeric($item))) {$IsValid = $false}
 		}
 	}
 	
-	if ($bValidMask)
+	if ($IsValid)
 	{
-		foreach ($item in $arrSections)
+		foreach ($item in $MaskParts)
 		{
 			$item = [int]$item
-			if ($item -lt 0 -or $item -gt 255) {$bValidMask = $false}
+			if ($item -lt 0 -or $item -gt 255) {$IsValid = $false}
 		}
 	}
 	
-	# Lastly, make sure it is actually a subnet mask when converted into binary format
-	if ($bValidMask)
+	if ($IsValid)
 	{
-		foreach ($item in $arrSections)
+		foreach ($item in $MaskParts)
 		{
 			$binary = [Convert]::ToString($item,2)
 			if ($binary.length -lt 8)
@@ -618,18 +595,18 @@ function ValidateSubnetMask ($strSubnetMask)
 			}
 			$strFullBinary = $strFullBinary+$binary
 		}
-		if ($strFullBinary.contains("01")) {$bValidMask = $false}
-		if ($bValidMask)
+		if ($strFullBinary.contains("01")) {$IsValid = $false}
+		if ($IsValid)
 		{
 			$strFullBinary = $strFullBinary.replace("10", "1.0")
-			if ((($strFullBinary.split(".")).count -ne 2)) {$bValidMask = $false}
+			if ((($strFullBinary.split(".")).count -ne 2)) {$IsValid = $false}
 		}
 	}
-	Return $bValidMask
+	Return $IsValid
 }
 
 # Calculate IP range
-function Get-IPrangeStartEnd{ 
+function Get-IPrange{ 
     param (
         [string]$start,
         [string]$end,
@@ -1033,7 +1010,8 @@ $syncHash.arp_scriptblock = {
         [string]$end,     # End IP
         [int]$threshold,  # Max number of threads
         [bool]$more,      # Fetch more info
-        [int]$DelayMS     # Delay for arp ping
+        [int]$DelayMS,    # Delay for arp ping
+        [bool]$ARP_Clear  # Clear ARP Cache before scanning
     )
 
     $StartArray = $start.Split('.')
@@ -1055,6 +1033,10 @@ $syncHash.arp_scriptblock = {
         $syncHash.ScanCompleted = $true
 
         return
+    }
+
+    if($ARP_Clear) {
+        arp -d # Clear ARP cache
     }
 
     $syncHash.Count = 0
@@ -1420,9 +1402,9 @@ $syncHash.GUI.BTN_Scan.Add_Click({
         $threshold = 128
         $syncHash.Gui.TB_Threshold.text = "128"
     }
-    if($threshold -eq 0) {
-        $threshold = 50
-        $syncHash.Gui.TB_Threshold.text = "50"
+    if($threshold -lt 16) {
+        $threshold = 16
+        $syncHash.Gui.TB_Threshold.text = "16"
     }
 
     if($syncHash.GUI.CB_ARP.isChecked){
@@ -1454,7 +1436,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
             return
         }
 
-        if(!(ValidateSubnetMask($syncHash.Gui.TB_NetMask.text))) {
+        if(!(CheckSubnetMask($syncHash.Gui.TB_NetMask.text))) {
             $msg = "Illegal subnet mask detected."
             Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
             return
@@ -1462,7 +1444,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
 
         $mask = ($syncHash.GUI.TB_NetMask.text)
 
-        $range = Get-IPrangeStartEnd -ip $ip -mask $mask
+        $range = Get-IPrange -ip $ip -mask $mask
 
         Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "--------------------------" -NewLine $true
 
@@ -1485,7 +1467,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
             Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
             return
         }
-        $range = Get-IPrangeStartEnd -ip $ip -cidr $cidr
+        $range = Get-IPrange -ip $ip -cidr $cidr
 
         Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "--------------------------" -NewLine $true
 
@@ -1516,10 +1498,11 @@ $syncHash.GUI.BTN_Scan.Add_Click({
     $syncHash.Gui.BTN_About.IsEnabled    = $false
     $syncHash.Gui.BTN_Exit.IsEnabled     = $false
     $syncHash.Gui.TB_Delay.IsEnabled     = $false
+    $syncHash.Gui.CB_CC.IsEnabled        = $false
 
     # create the extra Powershell session and add the script block to execute
     if($syncHash.Gui.CB_ARP.IsChecked) { # ARP scan
-        $Session = [PowerShell]::Create().AddScript($syncHash.arp_scriptblock).AddArgument($range.Start).AddArgument($range.end).AddArgument($threshold).AddArgument($syncHash.GUI.cb_More.IsChecked).AddArgument($delay)
+        $Session = [PowerShell]::Create().AddScript($syncHash.arp_scriptblock).AddArgument($range.Start).AddArgument($range.end).AddArgument($threshold).AddArgument($syncHash.GUI.cb_More.IsChecked).AddArgument($delay).AddArgument($syncHash.GUI.CB_CC.IsChecked)
     } else { # Ping scan
         $Session = [PowerShell]::Create().AddScript($syncHash.scan_scriptblock).AddArgument($range.Start).AddArgument($range.end).AddArgument($threshold).AddArgument($syncHash.GUI.cb_More.IsChecked)
     }
@@ -1553,13 +1536,16 @@ $syncHash.Gui.BTN_About.add_click({
         Show-Result -Font "Courier New" -Size "30" -Color "Yellow" -Text "$emoji_box_h" -NewLine $nl
     }
 
-    Show-Result -Font "Courier New" -Size "20" -Color "Lime" -Text "$copyright David Wang, 2021" -NewLine $true
+    Show-Result -Font "Courier New" -Size "20" -Color "Lime" -Text "$copyright David Wang, 2021 - V1.0" -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "Required module: PSParallel" -NewLine $false
-    Show-Result -Font "Courier New" -Size "18" -Color "LightGreen" -Text " (By Staffan Gustafsson)" -NewLine $true
-    Show-Result -Font "Courier New" -Size "18" -Color "LightBlue" -Text "https://github.com/powercode/PSParallel" -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "LightGreen" -Text " (By Staffan Gustafsson)" -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "LightBlue" -Text " https://github.com/powercode/PSParallel" -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "Required account type: " -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Pink" -Text "Elevated domain admin" -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
-    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text "ESC to clear output when focused" -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "ESC" -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text " to clear output when focused" -NewLine $true
 
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
 
@@ -1581,11 +1567,11 @@ $syncHash.Gui.BTN_About.add_click({
     Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'The above copyright notice and this permission notice shall be included in all copies or substantial' -NewLine $true
     Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'portions of the Software.' -NewLine $true
     Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text '                 ' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.' -NewLine $true
+    Show-Result -Font "Courier New" -Size "16" -Color "Yellow" -Text 'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT' -NewLine $true
+    Show-Result -Font "Courier New" -Size "16" -Color "Yellow" -Text 'LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.' -NewLine $true
+    Show-Result -Font "Courier New" -Size "16" -Color "Yellow" -Text 'IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,' -NewLine $true
+    Show-Result -Font "Courier New" -Size "16" -Color "Yellow" -Text 'WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE' -NewLine $true
+    Show-Result -Font "Courier New" -Size "16" -Color "Yellow" -Text 'SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.' -NewLine $true
 
     for($i=0;$i -lt 66; $i++){
         if($i -eq 65) {$nl = $true} else {$nl = $false}
