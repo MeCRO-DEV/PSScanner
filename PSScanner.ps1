@@ -165,8 +165,8 @@
             <Button x:Name="BTN_Scan" Content="Scan" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="851,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnLime}"/>
             <Button x:Name="BTN_Exit" Content="Exit" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="913,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnBrown}"/>
             <Button x:Name="BTN_About" Content="" FontFamily="Courier New" FontSize="15" HorizontalAlignment="Left" Height="30" Margin="975,4,0,0" VerticalAlignment="Top" Width="35" Foreground="Yellow" Style="{StaticResource btnGreen}"/>
-            <RichTextBox x:Name="RTB_Output" FontFamily="Courier New" FontSize="18" HorizontalAlignment="Left" Height="668" Margin="4,36,0,0" VerticalAlignment="Top" Width="1006" Background="Black" Foreground="LightGreen" IsReadOnly="true" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible" MaxWidth="4000">
-                <FlowDocument  PageWidth="2048">
+            <RichTextBox x:Name="RTB_Output" FontFamily="Courier New" FontSize="18" HorizontalAlignment="Left" Height="668" Margin="4,36,0,0" VerticalAlignment="Top" Width="1006" Background="Black" Foreground="LightGreen" IsReadOnly="true" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible" MaxWidth="4096">
+                <FlowDocument  PageWidth="4096">
                     <Paragraph>
                         <Run Text=""/>
                     </Paragraph>
@@ -249,11 +249,9 @@ Function isThreadRunning {
     }
 
     if ($Queue -gt 0){
-        Remove-Variable -Name "Queue" -ErrorAction SilentlyContinue
         return $true
     }
 
-    Remove-Variable -Name "Queue" -ErrorAction SilentlyContinue
     return $false
 }
 
@@ -273,13 +271,6 @@ $syncHash.Window.add_closing({
     if($syncHash.timer){
         $syncHash.timer.Stop() 2>$null
     }
-
-    # Get rid of all global variables
-    Remove-Variable -Name "emoji_about" -ErrorAction SilentlyContinue
-    Remove-Variable -Name "emoji_box_h" -ErrorAction SilentlyContinue
-    Remove-Variable -Name "running"     -ErrorAction SilentlyContinue
-    Remove-Variable -Name "xaml"        -ErrorAction SilentlyContinue
-    Remove-Variable -Name "reader"      -ErrorAction SilentlyContinue
 })
 
 # Clean up the runspaces when exiting the GUI
@@ -292,10 +283,6 @@ $syncHash.Window.add_closed({
         }
         $RunspacePool.Close()
     }
-    Remove-Variable -Name "SessionVariable" -ErrorAction SilentlyContinue
-    Remove-Variable -Name "SessionState"    -ErrorAction SilentlyContinue
-    Remove-Variable -Name "MaxThreads"      -ErrorAction SilentlyContinue
-    Remove-Variable -Name "RunspacePool"    -ErrorAction SilentlyContinue
 })
 
 # Exit button clicked
@@ -386,7 +373,6 @@ $handler_keypress = {
         $fStream.Close()
         Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text "Screen saved." -NewLine $true
     }
-    Remove-Variable -Name "key" -ErrorAction SilentlyContinue
 }
 $syncHash.Gui.RTB_Output.add_KeyDown($handler_keypress)
 
@@ -404,23 +390,18 @@ function Show-Result {
     try{
         $RichTextRange = New-Object System.Windows.Documents.TextRange( $syncHash.Gui.RTB_Output.Document.ContentEnd, $syncHash.Gui.rtb_Output.Document.ContentEnd ) 
     } catch {
-        write-debug $error[0]
     }
 
     if($Text){
         $RichTextRange.Text = $Text
     } else {
         $RichTextRange.Text = "          "
-        write-debug $error[0]
     }
     
     if($Color){
         try{
             $RichTextRange.ApplyPropertyValue( ( [System.Windows.Documents.TextElement]::ForegroundProperty ), $Color ) 2>&1 | Out-Null
         } catch {
-            $e = "[Error] : Color Null value detected."
-            write-debug $e
-            Remove-Variable -Name "e" -ErrorAction SilentlyContinue
         }
     } else {
         $RichTextRange.ApplyPropertyValue( ( [System.Windows.Documents.TextElement]::ForegroundProperty ), "Red" )
@@ -430,9 +411,6 @@ function Show-Result {
         try{
             $RichTextRange.ApplyPropertyValue( ( [System.Windows.Documents.TextElement]::FontFamilyProperty ), $Font ) 2>&1 | Out-Null
         } catch {
-            $e = "[Error] : Font Null value detected."
-            write-debug $e
-            Remove-Variable -Name "e" -ErrorAction SilentlyContinue
         }
         
     } else {
@@ -443,9 +421,6 @@ function Show-Result {
         try{
             $RichTextRange.ApplyPropertyValue( ( [System.Windows.Documents.TextElement]::FontSizeProperty ),   $Size ) 2>&1 | Out-Null
         } catch {
-            $e = "[Error] : Size Null value detected."
-            Write-Debug $e
-            Remove-Variable -Name "e" -ErrorAction SilentlyContinue
         }
         
     }else{
@@ -457,12 +432,10 @@ function Show-Result {
     } 
     
     $syncHash.Gui.RTB_Output.ScrollToEnd()
-
-    Remove-Variable -Name "RichTextRange" -ErrorAction SilentlyContinue
 }
 
 # UI updating block, called by a timer dispatch
-$syncHash.updateTerminal = {
+$syncHash.OutputResult = {
     $objHash = @{
         font    = ""
         size    = ""
@@ -488,8 +461,6 @@ $syncHash.updateTerminal = {
             }
         }
     }
-    Remove-Variable -Name "objHash" -ErrorAction SilentlyContinue
-    Remove-Variable -Name "ok" -ErrorAction SilentlyContinue
 }
 
 # Show result in worker threads
@@ -509,7 +480,6 @@ $syncHash.outputFromThread_scriptblock = {
         newline = $n
     }
     $syncHash.Q.Enqueue($objHash)
-    Remove-Variable -Name "objHash" -ErrorAction SilentlyContinue
 }
 
 #Timer for updating the terminal
@@ -517,13 +487,13 @@ $syncHash.timer_terminal = new-object System.Windows.Threading.DispatcherTimer
 
 # Setup timer and callback for updating GUI
 $syncHash.Window.Add_SourceInitialized({            
-    $syncHash.timer_terminal.Interval = [TimeSpan]"0:0:0.10"
-    $syncHash.timer_terminal.Add_Tick( $syncHash.updateTerminal )
+    $syncHash.timer_terminal.Interval = [TimeSpan]"0:0:0.20"
+    $syncHash.timer_terminal.Add_Tick( $syncHash.OutputResult )
     $syncHash.timer_terminal.Start()
 })
 
 # Update UI
-$syncHash.updateBlock = {
+$syncHash.updateUI = {
     if($syncHash.ScanCompleted){
         $syncHash.ScanCompleted = $false
 
@@ -560,8 +530,8 @@ $syncHash.timer = new-object System.Windows.Threading.DispatcherTimer
 
 # Setup timer and callback for updating GUI
 $syncHash.Window.Add_SourceInitialized({            
-    $syncHash.timer.Interval = [TimeSpan]"0:0:0.10"
-    $syncHash.timer.Add_Tick( $syncHash.updateBlock )
+    $syncHash.timer.Interval = [TimeSpan]"0:0:5.00"
+    $syncHash.timer.Add_Tick( $syncHash.updateUI )
     $syncHash.timer.Start()
 })
 
@@ -681,8 +651,6 @@ $syncHash.Devider_scriptblock = {
         }
     }
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text "=" -NewLine $true
-
-    Remove-Variable -Name "i" -ErrorAction SilentlyContinue
 }
 
 # Ping Scan
@@ -700,18 +668,14 @@ $syncHash.scan_scriptblock = {
     if($StartArray[0] -ne $EndArray[0]){
         $msg = "IP range too large to handle, CIDR >= 16"
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
-
         $syncHash.ScanCompleted = $true
-
         return
     }
 
     if($StartArray[1] -ne $EndArray[1]){
         $msg = "IP range too large to handle, CIDR should be larger than 16"
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
-
         $syncHash.ScanCompleted = $true
-
         return
     }
 
@@ -758,11 +722,7 @@ $syncHash.scan_scriptblock = {
             [string]$msg = ""
             [string]$cn  = ""
 
-            try {
-                $test = [bool](Test-Connection -BufferSize 32 -Count 3 -ComputerName $_)
-            } catch {
-                write-debug $error[0]
-            }
+            $test = [bool](Test-Connection -BufferSize 32 -Count 3 -ComputerName $_ -ErrorAction SilentlyContinue)
 
             if($test){
                 $syncHash.Count = $syncHash.Count + 1
@@ -806,15 +766,6 @@ $syncHash.scan_scriptblock = {
                 }
                 Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","MediumSpringGreen",$msg,$true
             }
-            Remove-Variable -Name "msg" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "cn" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "test" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "e" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "hsEntry" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "a" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "b" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "c" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "sn" -ErrorAction SilentlyContinue
         }
 
         $total = ($Oct4Last - $Oct4First + 1) * ($Oct3Last - $Oct3First + 1)
@@ -852,25 +803,6 @@ $syncHash.scan_scriptblock = {
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","YellowGreen",$msg,$true
 
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
-
-        Remove-Variable -Name "test" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "Oct3First" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "Oct3Last" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "Oct4First" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "Oct4Last" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "cn" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "Time" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "IPAddresses" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "t" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "msg" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "total" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "cnt" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "currenttime" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "d" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "h" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "m" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "s" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "t" -ErrorAction SilentlyContinue
     }
 
     # In case of CIDR >= 24
@@ -907,11 +839,8 @@ $syncHash.scan_scriptblock = {
             [string]$msg = ""
             [string]$cn  = ""
 
-            try {
-                $test = [bool](Test-Connection -BufferSize 32 -Count 3 -ComputerName $_)
-            } catch {
-                write-debug $error[0]
-            }
+            $test = [bool](Test-Connection -BufferSize 32 -Count 3 -ComputerName $_ -ErrorAction SilentlyContinue)
+
             if($test){
                 $syncHash.Count = $syncHash.Count + 1
 
@@ -954,15 +883,6 @@ $syncHash.scan_scriptblock = {
                 }
                 Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","LightGreen",$msg,$true
             }
-            Remove-Variable -Name "msg" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "cn" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "test" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "e" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "hsEntry" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "uArray" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "uItem" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "user" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "sn" -ErrorAction SilentlyContinue
         }
 
         $total = $ipLast - $ipFirst + 1
@@ -1000,26 +920,7 @@ $syncHash.scan_scriptblock = {
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","YellowGreen",$msg,$true
 
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
-
-        Remove-Variable -Name "test" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "ipFirst" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "ipLast" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "cn" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "Time" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "IPAddresses" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "msg" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "total" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "cnt" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "currenttime" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "d" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "h" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "m" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "s" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "t" -ErrorAction SilentlyContinue
     }
-    Remove-Variable -Name "StartArray" -ErrorAction SilentlyContinue
-    Remove-Variable -Name "EndArray" -ErrorAction SilentlyContinue
-    Remove-Variable -Name "msg" -ErrorAction SilentlyContinue
 
     $syncHash.Count = 0
 
@@ -1112,10 +1013,6 @@ $syncHash.arp_scriptblock = {
             if ($Using:DelayMS) {
                 [System.Threading.Thread]::Sleep($Using:DelayMS)
             }
-
-            Remove-Variable -Name "ASCIIEncoding" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "Bytes" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "UDP" -ErrorAction SilentlyContinue
         }
 
         $IPAddresses | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock $ArpScriptBlock
@@ -1130,57 +1027,46 @@ $syncHash.arp_scriptblock = {
             [string]$cn  = ""
             [string]$ip  = $_.ip
 
-            if($true){
-                $syncHash.Count = $syncHash.Count + 1
+            $syncHash.Count = $syncHash.Count + 1
 
-                $hsEntry = [System.Net.Dns]::GetHostEntry($ip)  # reverse  DNS lookup
+            $hsEntry = [System.Net.Dns]::GetHostEntry($ip)  # reverse  DNS lookup
                 
-                if($hsEntry){
-                    if($more){
-                        $cn = (($hsEntry.HostName).Split('.'))[0]
-                    } else {
-                        $cn = $hsEntry.HostName
-                    }
-                } else {
-                    $cn = "..."
-                }
-                
-                $msg = $ip.PadRight(17,' ') + $cn
-
+            if($hsEntry){
                 if($more){
-                    $a = query user /server:$cn
-                    if($a){
-                        $b = ((($a[1]) -replace '^>', '') -replace '\s{2,}', ',').Trim() | ForEach-Object {
-                            if ($_.Split(',').Count -eq 5) {
-                                Write-Output ($_ -replace '(^[^,]+)', '$1,')
-                            } else {
-                                Write-Output $_
-                            }
-                        }
-                        $c = ($b.split(','))[0]
-                    } else {
-                        $c = "..."
-                    }
-                    $msg = $msg.PadRight(49,' ') + $c
-                    
-                    $sn = (Get-WmiObject -ComputerName $cn -class win32_bios).SerialNumber
-                    if($sn){
-                        $msg = $msg.PadRight(69,' ') + $sn
-                    } else {
-                        $msg = $msg.PadRight(69,' ') + "..."
-                    }
+                    $cn = (($hsEntry.HostName).Split('.'))[0]
+                } else {
+                    $cn = $hsEntry.HostName
                 }
-                Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","MediumSpringGreen",$msg,$true
+            } else {
+                $cn = "..."
             }
-            Remove-Variable -Name "msg" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "cn" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "test" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "e" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "hsEntry" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "a" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "b" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "c" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "sn" -ErrorAction SilentlyContinue
+                
+            $msg = $ip.PadRight(17,' ') + $cn
+
+            if($more){
+                $a = query user /server:$cn
+                if($a){
+                    $b = ((($a[1]) -replace '^>', '') -replace '\s{2,}', ',').Trim() | ForEach-Object {
+                        if ($_.Split(',').Count -eq 5) {
+                            Write-Output ($_ -replace '(^[^,]+)', '$1,')
+                        } else {
+                            Write-Output $_
+                        }
+                    }
+                    $c = ($b.split(','))[0]
+                } else {
+                    $c = "..."
+                }
+                $msg = $msg.PadRight(49,' ') + $c
+                    
+                $sn = (Get-WmiObject -ComputerName $cn -class win32_bios).SerialNumber
+                if($sn){
+                    $msg = $msg.PadRight(69,' ') + $sn
+                } else {
+                    $msg = $msg.PadRight(69,' ') + "..."
+                    }
+            }
+            Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","MediumSpringGreen",$msg,$true
         }
 
         $total = ($Oct4Last - $Oct4First + 1) * ($Oct3Last - $Oct3First + 1)
@@ -1218,25 +1104,6 @@ $syncHash.arp_scriptblock = {
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","YellowGreen",$msg,$true
 
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
-
-        Remove-Variable -Name "test" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "Oct3First" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "Oct3Last" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "Oct4First" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "Oct4Last" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "cn" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "Time" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "IPAddresses" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "t" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "msg" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "total" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "cnt" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "currenttime" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "d" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "h" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "m" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "s" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "t" -ErrorAction SilentlyContinue
     }
 
     # In case of CIDR >= 24
@@ -1279,11 +1146,6 @@ $syncHash.arp_scriptblock = {
             if ($Using:DelayMS) {
                 [System.Threading.Thread]::Sleep($Using:DelayMS)
             }
-
-            Remove-Variable -Name "ASCIIEncoding" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "Bytes" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "UDP" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "DelayMS" -ErrorAction SilentlyContinue
         }
 
         $Hosts = arp -a
@@ -1296,57 +1158,46 @@ $syncHash.arp_scriptblock = {
             [string]$cn  = ""
             [string]$ip  = $_.ip
 
-            if($true){
-                $syncHash.Count = $syncHash.Count + 1
+            $syncHash.Count = $syncHash.Count + 1
 
-                $hsEntry = [System.Net.Dns]::GetHostEntry($ip)  # reverse  DNS lookup
+            $hsEntry = [System.Net.Dns]::GetHostEntry($ip)  # reverse  DNS lookup
 
-                if($hsEntry){
-                    if($more){
-                        $cn = (($hsEntry.HostName).Split('.'))[0]
-                    } else {
-                        $cn = $hsEntry.HostName
-                    }
-                } else {
-                    $cn = "..."
-                }
-
-                $msg = $ip.PadRight(17,' ') + $cn
-
+            if($hsEntry){
                 if($more){
-                    $uArray = query user /server:$cn
-                    if($uArray){
-                        $uItem = ((($uArray[1]) -replace '^>', '') -replace '\s{2,}', ',').Trim() | ForEach-Object {
-                            if ($_.Split(',').Count -eq 5) {
-                                Write-Output ($_ -replace '(^[^,]+)', '$1,')
-                            } else {
-                                Write-Output $_
-                            }
-                        }
-                        $user = ($uItem.split(','))[0]
-                    } else {
-                        $user = "..."
-                    }
-                    $msg = $msg.PadRight(49,' ') + $user
-                    
-                    $sn = (Get-WmiObject -ComputerName $cn -class win32_bios).SerialNumber
-                    if($sn){
-                        $msg = $msg.PadRight(69,' ') + $sn
-                    } else {
-                        $msg = $msg.PadRight(69,' ') + "..."
-                    }
+                    $cn = (($hsEntry.HostName).Split('.'))[0]
+                } else {
+                    $cn = $hsEntry.HostName
                 }
-                Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","LightGreen",$msg,$true
+            } else {
+                $cn = "..."
             }
-            Remove-Variable -Name "msg" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "cn" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "test" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "e" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "hsEntry" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "uArray" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "uItem" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "user" -ErrorAction SilentlyContinue
-            Remove-Variable -Name "sn" -ErrorAction SilentlyContinue
+
+            $msg = $ip.PadRight(17,' ') + $cn
+
+            if($more){
+                $uArray = query user /server:$cn
+                if($uArray){
+                    $uItem = ((($uArray[1]) -replace '^>', '') -replace '\s{2,}', ',').Trim() | ForEach-Object {
+                        if ($_.Split(',').Count -eq 5) {
+                            Write-Output ($_ -replace '(^[^,]+)', '$1,')
+                        } else {
+                            Write-Output $_
+                        }
+                    }
+                    $user = ($uItem.split(','))[0]
+                } else {
+                    $user = "..."
+                }
+                $msg = $msg.PadRight(49,' ') + $user
+                    
+                $sn = (Get-WmiObject -ComputerName $cn -class win32_bios).SerialNumber
+                if($sn){
+                    $msg = $msg.PadRight(69,' ') + $sn
+                } else {
+                    $msg = $msg.PadRight(69,' ') + "..."
+                }
+            }
+            Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","LightGreen",$msg,$true
         }
 
         $total = $ipLast - $ipFirst + 1
@@ -1384,26 +1235,7 @@ $syncHash.arp_scriptblock = {
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","YellowGreen",$msg,$true
 
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
-
-        Remove-Variable -Name "test" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "ipFirst" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "ipLast" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "cn" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "Time" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "IPAddresses" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "msg" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "total" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "cnt" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "currenttime" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "d" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "h" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "m" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "s" -ErrorAction SilentlyContinue
-        Remove-Variable -Name "t" -ErrorAction SilentlyContinue
     }
-    Remove-Variable -Name "StartArray" -ErrorAction SilentlyContinue
-    Remove-Variable -Name "EndArray" -ErrorAction SilentlyContinue
-    Remove-Variable -Name "msg" -ErrorAction SilentlyContinue
 
     $syncHash.Count = 0
 
@@ -1512,7 +1344,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
     $msg = "Creating worker threads with threshold $threshold ..."
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
 
-    Invoke-Command $syncHash.Devider_scriptblock
+    Invoke-Command $syncHash.Devider_scriptblock -ErrorAction SilentlyContinue
 
     # Disable wedgets
     $syncHash.Gui.TB_IPAddress.IsEnabled = $false
