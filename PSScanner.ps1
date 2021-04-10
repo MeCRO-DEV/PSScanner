@@ -374,6 +374,18 @@ $handler_keypress = {
     if($key -match "Escape"){
         $syncHash.Gui.rtb_Output.Document.Blocks.Clear()
     }
+    if($key -match "F12"){
+        if(!(Test-Path -Path "C:\PSScanner")) {
+            New-Item -Path "C:\PSScanner" -type directory -Force -ErrorAction Ignore -WarningAction Ignore -InformationAction Ignore | Out-Null
+        }
+        $range   = New-Object System.Windows.Documents.TextRange($syncHash.Gui.RTB_Output.Document.ContentStart, $syncHash.Gui.RTB_Output.Document.ContentEnd)
+        $dt = Get-Date -Format "MM-dd-yyyy-HH-mm-ss"
+        $path = "c:\PSScanner\" + '[' + $dt + ']' + '-output.txt'
+        $fStream = [System.IO.FileStream]::New($path, [System.IO.FileMode]::Create)
+        $range.Save($fStream, [System.Windows.DataFormats]::Text)
+        $fStream.Close()
+        Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text "Screen saved." -NewLine $true
+    }
     Remove-Variable -Name "key" -ErrorAction SilentlyContinue
 }
 $syncHash.Gui.RTB_Output.add_KeyDown($handler_keypress)
@@ -463,6 +475,17 @@ $syncHash.updateTerminal = {
 
         if($ok){
             Show-Result -Font $objHash.font -Size $objHash.size -Color $objHash.color -Text $objHash.msg -NewLine $objHash.newline
+            if($objHash.msg -match "completed"){
+                if(!(Test-Path -Path "C:\PSScanner")) {
+                    New-Item -Path "C:\PSScanner" -type directory -Force -ErrorAction Ignore -WarningAction Ignore -InformationAction Ignore | Out-Null
+                }
+                $range   = New-Object System.Windows.Documents.TextRange($syncHash.Gui.RTB_Output.Document.ContentStart, $syncHash.Gui.RTB_Output.Document.ContentEnd)
+                $dt = Get-Date -Format "MM-dd-yyyy-HH-mm-ss"
+                $path = "c:\PSScanner\" + '[' + $dt + ']' + '-output.txt'
+                $fStream = [System.IO.FileStream]::New($path, [System.IO.FileMode]::Create)
+                $range.Save($fStream, [System.Windows.DataFormats]::Text)
+                $fStream.Close()
+            }
         }
     }
     Remove-Variable -Name "objHash" -ErrorAction SilentlyContinue
@@ -1480,6 +1503,12 @@ $syncHash.GUI.BTN_Scan.Add_Click({
 
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "--------------------------" -NewLine $true
 
+    if($syncHash.Gui.CB_ARP.IsChecked) {
+        $msg = "[ARP] "
+    } else {
+        $msg = "[ICMP] "
+    }
+    Show-Result -Font "Courier New" -Size "18" -Color "Lime" -Text $msg -NewLine $false
     $msg = "Creating worker threads with threshold $threshold ..."
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
 
@@ -1545,7 +1574,10 @@ $syncHash.Gui.BTN_About.add_click({
     Show-Result -Font "Courier New" -Size "18" -Color "Pink" -Text "Elevated domain admin" -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "ESC" -NewLine $false
-    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text " to clear output when focused" -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text " to clear output when focused" -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Chartreuse" -Text "  Auto-save result to C:\PSScanner" -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text "  Manual-save" -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text " F12" -NewLine $true
 
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
 
