@@ -143,7 +143,7 @@
                     </Style>
                 </TextBlock.Style>
             </TextBlock>
-            <TextBox x:Name="TB_Threshold" Text="50" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="460,4,0,0" VerticalAlignment="Top" Width="60" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="3" Background="LightYellow" TextAlignment="Center" ToolTip="Runspace capacity [16-128]"/>
+            <TextBox x:Name="TB_Threshold" Text="16" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="460,4,0,0" VerticalAlignment="Top" Width="60" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="3" Background="LightYellow" TextAlignment="Center" ToolTip="Runspace capacity [16-128]"/>
             <TextBlock IsHitTestVisible="False" Text="Threshold" FontFamily="Courier New" FontSize="10" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="462,14,0,0" Foreground="DarkGray">
                 <TextBlock.Style>
                     <Style TargetType="{x:Type TextBlock}">
@@ -177,7 +177,7 @@
                     <TextBlock x:Name="SB" FontFamily="Courier New" FontSize="16" FontWeight="Bold" Foreground="Blue"/>
                 </StatusBarItem>
             </StatusBar>
-            <ProgressBar x:Name="PB" IsIndeterminate="False" HorizontalAlignment="Left" Height="26" Margin="824,706,0,0" VerticalAlignment="Top" Width="186"/>
+            <ProgressBar x:Name="PB" IsIndeterminate="False" HorizontalAlignment="Left" Height="26" Margin="824,706,0,0" VerticalAlignment="Top" Width="186" Background="LightYellow" Foreground="Blue"/>
         </Grid>
     </Window>
 }
@@ -443,7 +443,7 @@ $syncHash.OutputResult = {
         msg     = ""
         newline = $false
     }
-    if($syncHash.Q.Count -ne 0){
+    if(!($syncHash.Q.IsEmpty)){
         [bool]$ok = $syncHash.Q.TryDequeue([ref]$objHash)
 
         if($ok){
@@ -460,6 +460,7 @@ $syncHash.OutputResult = {
                 $fStream.Close()
             }
         }
+        Remove-Variable -Name "ok" -ErrorAction SilentlyContinue
     }
 }
 
@@ -487,7 +488,7 @@ $syncHash.timer_terminal = new-object System.Windows.Threading.DispatcherTimer
 
 # Setup timer and callback for updating GUI
 $syncHash.Window.Add_SourceInitialized({            
-    $syncHash.timer_terminal.Interval = [TimeSpan]"0:0:0.20"
+    $syncHash.timer_terminal.Interval = [TimeSpan]"0:0:0.10"
     $syncHash.timer_terminal.Add_Tick( $syncHash.OutputResult )
     $syncHash.timer_terminal.Start()
 })
