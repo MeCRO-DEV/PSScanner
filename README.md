@@ -11,8 +11,6 @@ Files:
 
 PSScanner.ps1  : Requires Windows Powershell 5.0 up with PSParallel module installed
 
-PSScanner7.ps1 : Requires Powershell Core 7.0 up with ForEach-Object -Parallel supported
-
 Contributions : Pull requests and/or suggestions are more than welcome via email: support@mecro.ca
 
 Screenshot:
