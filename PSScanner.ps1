@@ -223,7 +223,7 @@ $SessionVariable = New-Object 'Management.Automation.Runspaces.SessionStateVaria
 
 $SessionState = [Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
 $SessionState.Variables.Add($SessionVariable)
-$MaxThreads = 50 #[int]$env:NUMBER_OF_PROCESSORS + 10
+$MaxThreads = [int]$env:NUMBER_OF_PROCESSORS
 $RunspacePool = [RunspaceFactory]::CreateRunspacePool(1, $MaxThreads, $SessionState, $Host)
 $RunspacePool.ApartmentState = [Threading.ApartmentState]::STA
 $RunspacePool.Open()
@@ -654,331 +654,45 @@ $syncHash.Devider_scriptblock = {
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text "=" -NewLine $true
 }
 
-# Ping Scan
+# Ping or ARP Scan
 $syncHash.scan_scriptblock = {
     param(
         [string]$start,   # Start IP
         [string]$end,     # End IP
         [int]$threshold,  # Max number of threads
-        [bool]$more       # Fetch more info
-    )
-
-    $StartArray = $start.Split('.')
-    $EndArray = $end.Split('.')
-
-    if($StartArray[0] -ne $EndArray[0]){
-        $msg = "IP range too large to handle, CIDR >= 16"
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
-        $syncHash.ScanCompleted = $true
-        return
-    }
-
-    if($StartArray[1] -ne $EndArray[1]){
-        $msg = "IP range too large to handle, CIDR should be larger than 16"
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
-        $syncHash.ScanCompleted = $true
-        return
-    }
-
-    $syncHash.Count = 0
-
-    # In case of 16 <= CIDR < 24
-    if($StartArray[2] -ne $EndArray[2]){
-        [bool]$test     = $false
-        [int]$Oct3First = $StartArray[2] -as [int]
-        [int]$Oct3Last  = $EndArray[2]   -as [int]
-        [int]$Oct4First = $StartArray[3] -as [int]
-        [int]$Oct4Last  = $EndArray[3]   -as [int]
-        [string]$cn     = ""
-
-        $Time = [System.Diagnostics.Stopwatch]::StartNew()
-
-        $syncHash.Count = 0
-
-        if($Oct4First -eq 0){
-            $Oct4First++
-        }
-
-        if($Oct4Last -eq 255){
-            $Oct4Last--
-        }
-
-        $IPAddresses = $Oct3First..$Oct3Last | ForEach-Object {
-            $t = $_
-            $Oct4First..$Oct4Last | ForEach-Object {
-                $StartArray[0]+'.'+$StartArray[1]+'.'+$t+'.'+$_
-            }
-        }
-
-        $msg = "IP"
-        $msg = $msg.PadRight(17,' ') + "Hostname"
-
-        if($more){
-            $msg = $msg.PadRight(49,' ') + "Logon-User"
-            $msg = $msg.PadRight(69,' ') + "SerialNumber"
-        }
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
-
-        $IPAddresses | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock {
-            [string]$msg = ""
-            [string]$cn  = ""
-
-            $test = [bool](Test-Connection -BufferSize 32 -Count 3 -ComputerName $_ -ErrorAction SilentlyContinue)
-
-            if($test){
-                $syncHash.Count = $syncHash.Count + 1
-
-                $hsEntry = [System.Net.Dns]::GetHostEntry($_)  # reverse  DNS lookup
-                
-                if($hsEntry){
-                    if($more){
-                        $cn = (($hsEntry.HostName).Split('.'))[0]
-                    } else {
-                        $cn = $hsEntry.HostName
-                    }
-                } else {
-                    $cn = "..."
-                }
-                
-                $msg = $_.PadRight(17,' ') + $cn
-
-                if($more){
-                    $a = query user /server:$cn
-                    if($a){
-                        $b = ((($a[1]) -replace '^>', '') -replace '\s{2,}', ',').Trim() | ForEach-Object {
-                            if ($_.Split(',').Count -eq 5) {
-                                Write-Output ($_ -replace '(^[^,]+)', '$1,')
-                            } else {
-                                Write-Output $_
-                            }
-                        }
-                        $c = ($b.split(','))[0]
-                    } else {
-                        $c = "..."
-                    }
-                    $msg = $msg.PadRight(49,' ') + $c
-                    
-                    $sn = (Get-WmiObject -ComputerName $cn -class win32_bios).SerialNumber
-                    if($sn){
-                        $msg = $msg.PadRight(69,' ') + $sn
-                    } else {
-                        $msg = $msg.PadRight(69,' ') + "..."
-                    }
-                }
-                Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","MediumSpringGreen",$msg,$true
-            }
-        }
-
-        $total = ($Oct4Last - $Oct4First + 1) * ($Oct3Last - $Oct3First + 1)
-
-        $msg = "Total "
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White","     ",$true
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
-
-        $msg = $total.ToString()
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
-
-        $msg = " IP(s) scanned in ["
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
-
-        $currenttime = $Time.Elapsed
-
-        $d = ($currenttime.days).ToString()
-        $h = ($currenttime.hours).ToString()
-        $m = ($currenttime.minutes).ToString()
-        $s = ($currenttime.seconds).ToString()
-        $t = ($currenttime.Milliseconds).ToString()
-        $msg = $d + ":" + $h + ":" + $m + ":" + $s + ":" + $t
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
-
-        $msg = "],  Total "
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
-
-        $msg = $syncHash.Count
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Magenta",$msg,$false
-
-        $msg = " node(s) alive."
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$true
-
-        $msg = "===== Scanning network " + $start +" --- " + $end + " completed ====="
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","YellowGreen",$msg,$true
-
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
-    }
-
-    # In case of CIDR >= 24
-    if(($StartArray[2] -eq $EndArray[2]) -and ($StartArray[3] -ne $EndArray[3])){
-        [bool]$test   = $false
-        [int]$ipFirst = $StartArray[3] -as [int]
-        [int]$ipLast  = $EndArray[3] -as [int]
-        [string]$cn   = ""
-        
-        $Time = [System.Diagnostics.Stopwatch]::StartNew()
-
-        $syncHash.count = 0
-
-        if($ipFirst -eq 0){
-            $ipFirst++
-        }
-
-        if($ipLast -eq 255){
-            $ipLast--
-        }
-
-        $IPAddresses = $ipFirst..$ipLast | ForEach-Object {$StartArray[0]+'.'+$StartArray[1]+'.'+$StartArray[2]+'.'+$_}
-
-        $msg = "IP"
-        $msg = $msg.PadRight(17,' ') + "Hostname"
-
-        if($more){
-            $msg = $msg.PadRight(49,' ') + "Logon-User"
-            $msg = $msg.PadRight(69,' ') + "SerialNumber"
-        }
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
-
-        $IPAddresses | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock {
-            [string]$msg = ""
-            [string]$cn  = ""
-
-            $test = [bool](Test-Connection -BufferSize 32 -Count 3 -ComputerName $_ -ErrorAction SilentlyContinue)
-
-            if($test){
-                $syncHash.Count = $syncHash.Count + 1
-
-                $hsEntry = [System.Net.Dns]::GetHostEntry($_)  # reverse  DNS lookup
-
-                if($hsEntry){
-                    if($more){
-                        $cn = (($hsEntry.HostName).Split('.'))[0]
-                    } else {
-                        $cn = $hsEntry.HostName
-                    }
-                } else {
-                    $cn = "..."
-                }
-
-                $msg = $_.PadRight(17,' ') + $cn
-
-                if($more){
-                    $uArray = query user /server:$cn
-                    if($uArray){
-                        $uItem = ((($uArray[1]) -replace '^>', '') -replace '\s{2,}', ',').Trim() | ForEach-Object {
-                            if ($_.Split(',').Count -eq 5) {
-                                Write-Output ($_ -replace '(^[^,]+)', '$1,')
-                            } else {
-                                Write-Output $_
-                            }
-                        }
-                        $user = ($uItem.split(','))[0]
-                    } else {
-                        $user = "..."
-                    }
-                    $msg = $msg.PadRight(49,' ') + $user
-                    
-                    $sn = (Get-WmiObject -ComputerName $cn -class win32_bios).SerialNumber
-                    if($sn){
-                        $msg = $msg.PadRight(69,' ') + $sn
-                    } else {
-                        $msg = $msg.PadRight(69,' ') + "..."
-                    }
-                }
-                Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","LightGreen",$msg,$true
-            }
-        }
-
-        $total = $ipLast - $ipFirst + 1
-
-        $msg = "Total "
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White","     ",$true
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
-
-        $msg = $total
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
-
-        $msg = " IP(s) scanned in ["
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
-
-        $currenttime = $Time.Elapsed
-
-        $d = ($currenttime.days).ToString()
-        $h = ($currenttime.hours).ToString()
-        $m = ($currenttime.minutes).ToString()
-        $s = ($currenttime.seconds).ToString()
-        $t = ($currenttime.Milliseconds).ToString()
-        $msg = $d + ":" + $h + ":" + $m + ":" + $s + ":" + $t
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
-
-        $msg = "],  Total "
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
-
-        $msg = $syncHash.Count
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Magenta",$msg,$false
-
-        $msg = " node(s) alive."
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$true
-
-        $msg = "===== Scanning network " + $start +" --- " + $end + " completed ====="
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","YellowGreen",$msg,$true
-
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
-    }
-
-    $syncHash.Count = 0
-
-    $syncHash.ScanCompleted = $true
-}
-
-# ARP scan
-$syncHash.arp_scriptblock = {
-    param(
-        [string]$start,   # Start IP
-        [string]$end,     # End IP
-        [int]$threshold,  # Max number of threads
         [bool]$more,      # Fetch more info
-        [int]$DelayMS,    # Delay for arp ping
-        [bool]$ARP_Clear  # Clear ARP Cache before scanning
+        [bool]$arp,       # Use ARP scan
+        [bool]$ARP_Clear, # Clear ARP Cache before scanning
+        [int]$DelayMS     # Delay for arp ping
     )
 
     $StartArray = $start.Split('.')
     $EndArray = $end.Split('.')
 
+    [int]$Oct3First = $StartArray[2] -as [int]
+    [int]$Oct3Last  = $EndArray[2]   -as [int]
+    [int]$Oct4First = $StartArray[3] -as [int]
+    [int]$Oct4Last  = $EndArray[3]   -as [int]
+
     if($StartArray[0] -ne $EndArray[0]){
         $msg = "IP range too large to handle, CIDR >= 16"
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
-
         $syncHash.ScanCompleted = $true
-
         return
     }
 
     if($StartArray[1] -ne $EndArray[1]){
         $msg = "IP range too large to handle, CIDR should be larger than 16"
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
-
         $syncHash.ScanCompleted = $true
-
         return
     }
 
-    if($ARP_Clear) {
-        arp -d # Clear ARP cache
-    }
-
     $syncHash.Count = 0
+    $Time = [System.Diagnostics.Stopwatch]::StartNew()
 
     # In case of 16 <= CIDR < 24
     if($StartArray[2] -ne $EndArray[2]){
-        [bool]$test     = $false
-        [int]$Oct3First = $StartArray[2] -as [int]
-        [int]$Oct3Last  = $EndArray[2]   -as [int]
-        [int]$Oct4First = $StartArray[3] -as [int]
-        [int]$Oct4Last  = $EndArray[3]   -as [int]
-        [string]$cn     = ""
-
-        $Time = [System.Diagnostics.Stopwatch]::StartNew()
-
-        $syncHash.Count = 0
-
         if($Oct4First -eq 0){
             $Oct4First++
         }
@@ -993,15 +707,31 @@ $syncHash.arp_scriptblock = {
                 $StartArray[0]+'.'+$StartArray[1]+'.'+$t+'.'+$_
             }
         }
-
-        $msg = "IP"
-        $msg = $msg.PadRight(17,' ') + "Hostname"
-
-        if($more){
-            $msg = $msg.PadRight(49,' ') + "Logon-User"
-            $msg = $msg.PadRight(69,' ') + "SerialNumber"
+    } elseif(($StartArray[2] -eq $EndArray[2]) -and ($StartArray[3] -ne $EndArray[3])){ # In case of CIDR >= 24
+        if($Oct4First -eq 0){
+            $Oct4First++
         }
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
+
+        if($Oct4Last -eq 255){
+            $Oct4Last--
+        }
+
+        $IPAddresses = $Oct4First..$Oct4Last | ForEach-Object {$StartArray[0]+'.'+$StartArray[1]+'.'+$StartArray[2]+'.'+$_}
+    }
+
+    $msg = "IP"
+    $msg = $msg.PadRight(17,' ') + "Hostname"
+
+    if($more){
+        $msg = $msg.PadRight(49,' ') + "Logon-User"
+        $msg = $msg.PadRight(69,' ') + "SerialNumber"
+    }
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
+
+    if($arp){
+        if($ARP_Clear) {
+            arp -d # Clear ARP cache
+        }
 
         $ArpScriptBlock = {
             $ASCIIEncoding = New-Object System.Text.ASCIIEncoding
@@ -1011,23 +741,39 @@ $syncHash.arp_scriptblock = {
             $UDP.Connect($_,1)
             [void]$UDP.Send($Bytes,$Bytes.length)
 
-            if ($Using:DelayMS) {
-                [System.Threading.Thread]::Sleep($Using:DelayMS)
+            if ($DelayMS) {
+                [System.Threading.Thread]::Sleep($DelayMS)
             }
         }
-
         $IPAddresses | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock $ArpScriptBlock
 
         $Hosts = arp -a
 
         $Hosts = $Hosts | Where-Object {$_ -match "dynamic"} | ForEach-Object {($_.trim() -replace " {1,}",",") | ConvertFrom-Csv -Header "IP","MACAddress"}
         $Hosts = $Hosts | Where-Object {$_.IP -in $IPAddresses}
+    }
 
-        $Hosts | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock {
-            [string]$msg = ""
-            [string]$cn  = ""
-            [string]$ip  = $_.ip
+    if($arp){
+        $ips = $Hosts
+    } else {
+        $ips = $IPAddresses
+    }
 
+    $ips | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock {
+        [bool]$test  = $false
+        [string]$msg = ""
+        [string]$cn  = ""
+        [string]$ip  = ""
+        
+        if($arp){
+            $test = $true
+            $ip = $_.IP
+        } else {
+            $ip = $_
+            $test = [bool](Test-Connection -BufferSize 32 -Count 3 -ComputerName $ip -ErrorAction SilentlyContinue)
+        }
+
+        if($test){
             $syncHash.Count = $syncHash.Count + 1
 
             $hsEntry = [System.Net.Dns]::GetHostEntry($ip)  # reverse  DNS lookup
@@ -1062,184 +808,56 @@ $syncHash.arp_scriptblock = {
                     
                 $sn = (Get-WmiObject -ComputerName $cn -class win32_bios).SerialNumber
                 if($sn){
-                    $msg = $msg.PadRight(69,' ') + $sn
-                } else {
+                    $msg = $msg.PadRight(69,' ') + $sn                    } 
+                else {
                     $msg = $msg.PadRight(69,' ') + "..."
-                    }
+                }
             }
             Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","MediumSpringGreen",$msg,$true
         }
+    }
 
+    if($arp){
+        $total = $Hosts.Count
+    } else {
         $total = ($Oct4Last - $Oct4First + 1) * ($Oct3Last - $Oct3First + 1)
-
-        $msg = "Total "
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White","     ",$true
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
-
-        $msg = $total.ToString()
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
-
-        $msg = " IP(s) scanned in ["
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
-
-        $currenttime = $Time.Elapsed
-
-        $d = ($currenttime.days).ToString()
-        $h = ($currenttime.hours).ToString()
-        $m = ($currenttime.minutes).ToString()
-        $s = ($currenttime.seconds).ToString()
-        $t = ($currenttime.Milliseconds).ToString()
-        $msg = $d + ":" + $h + ":" + $m + ":" + $s + ":" + $t
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
-
-        $msg = "],  Total "
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
-
-        $msg = $syncHash.Count
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Magenta",$msg,$false
-
-        $msg = " node(s) alive."
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$true
-
-        $msg = "===== Scanning network " + $start +" --- " + $end + " completed ====="
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","YellowGreen",$msg,$true
-
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
     }
 
-    # In case of CIDR >= 24
-    if(($StartArray[2] -eq $EndArray[2]) -and ($StartArray[3] -ne $EndArray[3])){
-        [bool]$test   = $false
-        [int]$ipFirst = $StartArray[3] -as [int]
-        [int]$ipLast  = $EndArray[3] -as [int]
-        [string]$cn   = ""
-        
-        $Time = [System.Diagnostics.Stopwatch]::StartNew()
+    $msg = "Total "
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White","     ",$true
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
 
-        $syncHash.count = 0
+    $msg = $total.ToString()
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
 
-        if($ipFirst -eq 0){
-            $ipFirst++
-        }
+    $msg = " IP(s) scanned in ["
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
 
-        if($ipLast -eq 255){
-            $ipLast--
-        }
+    $currenttime = $Time.Elapsed
 
-        $IPAddresses = $ipFirst..$ipLast | ForEach-Object {$StartArray[0]+'.'+$StartArray[1]+'.'+$StartArray[2]+'.'+$_}
+    $d = ($currenttime.days).ToString()
+    $h = ($currenttime.hours).ToString()
+    $m = ($currenttime.minutes).ToString()
+    $s = ($currenttime.seconds).ToString()
+    $t = ($currenttime.Milliseconds).ToString()
+    $msg = $d + ":" + $h + ":" + $m + ":" + $s + ":" + $t
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
 
-        $msg = "IP"
-        $msg = $msg.PadRight(17,' ') + "Hostname"
+    $msg = "],  Total "
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
 
-        if($more){
-            $msg = $msg.PadRight(49,' ') + "Logon-User"
-            $msg = $msg.PadRight(69,' ') + "SerialNumber"
-        }
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
+    $msg = $syncHash.Count
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Magenta",$msg,$false
 
-        $IPAddresses | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock {
-            $ASCIIEncoding = New-Object System.Text.ASCIIEncoding
-            $Bytes = $ASCIIEncoding.GetBytes("a")
-            $UDP = New-Object System.Net.Sockets.Udpclient
+    $msg = " node(s) alive."
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$true
 
-            $UDP.Connect($_,1)
-            [void]$UDP.Send($Bytes,$Bytes.length)
-            if ($Using:DelayMS) {
-                [System.Threading.Thread]::Sleep($Using:DelayMS)
-            }
-        }
+    $msg = "===== Scanning network " + $start +" --- " + $end + " completed ====="
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","YellowGreen",$msg,$true
 
-        $Hosts = arp -a
-
-        $Hosts = $Hosts | Where-Object {$_ -match "dynamic"} | ForEach-Object {($_.trim() -replace " {1,}",",") | ConvertFrom-Csv -Header "IP","MACAddress"}
-        $Hosts = $Hosts | Where-Object {$_.IP -in $IPAddresses}
-
-        $Hosts | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock {
-            [string]$msg = ""
-            [string]$cn  = ""
-            [string]$ip  = $_.ip
-
-            $syncHash.Count = $syncHash.Count + 1
-
-            $hsEntry = [System.Net.Dns]::GetHostEntry($ip)  # reverse  DNS lookup
-
-            if($hsEntry){
-                if($more){
-                    $cn = (($hsEntry.HostName).Split('.'))[0]
-                } else {
-                    $cn = $hsEntry.HostName
-                }
-            } else {
-                $cn = "..."
-            }
-
-            $msg = $ip.PadRight(17,' ') + $cn
-
-            if($more){
-                $uArray = query user /server:$cn
-                if($uArray){
-                    $uItem = ((($uArray[1]) -replace '^>', '') -replace '\s{2,}', ',').Trim() | ForEach-Object {
-                        if ($_.Split(',').Count -eq 5) {
-                            Write-Output ($_ -replace '(^[^,]+)', '$1,')
-                        } else {
-                            Write-Output $_
-                        }
-                    }
-                    $user = ($uItem.split(','))[0]
-                } else {
-                    $user = "..."
-                }
-                $msg = $msg.PadRight(49,' ') + $user
-                    
-                $sn = (Get-WmiObject -ComputerName $cn -class win32_bios).SerialNumber
-                if($sn){
-                    $msg = $msg.PadRight(69,' ') + $sn
-                } else {
-                    $msg = $msg.PadRight(69,' ') + "..."
-                }
-            }
-            Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","LightGreen",$msg,$true
-        }
-
-        $total = $ipLast - $ipFirst + 1
-
-        $msg = "Total "
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White","     ",$true
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
-
-        $msg = $total
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
-
-        $msg = " IP(s) scanned in ["
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
-
-        $currenttime = $Time.Elapsed
-
-        $d = ($currenttime.days).ToString()
-        $h = ($currenttime.hours).ToString()
-        $m = ($currenttime.minutes).ToString()
-        $s = ($currenttime.seconds).ToString()
-        $t = ($currenttime.Milliseconds).ToString()
-        $msg = $d + ":" + $h + ":" + $m + ":" + $s + ":" + $t
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
-
-        $msg = "],  Total "
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
-
-        $msg = $syncHash.Count
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Magenta",$msg,$false
-
-        $msg = " node(s) alive."
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$true
-
-        $msg = "===== Scanning network " + $start +" --- " + $end + " completed ====="
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","YellowGreen",$msg,$true
-
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
-    }
-
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
+    
     $syncHash.Count = 0
-
     $syncHash.ScanCompleted = $true
 }
 
@@ -1363,11 +981,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
     $syncHash.Gui.CB_CC.IsEnabled        = $false
 
     # create the extra Powershell session and add the script block to execute
-    if($syncHash.Gui.CB_ARP.IsChecked) { # ARP scan
-        $Session = [PowerShell]::Create().AddScript($syncHash.arp_scriptblock).AddArgument($range.Start).AddArgument($range.end).AddArgument($threshold).AddArgument($syncHash.GUI.cb_More.IsChecked).AddArgument($delay).AddArgument($syncHash.GUI.CB_CC.IsChecked)
-    } else { # Ping scan
-        $Session = [PowerShell]::Create().AddScript($syncHash.scan_scriptblock).AddArgument($range.Start).AddArgument($range.end).AddArgument($threshold).AddArgument($syncHash.GUI.cb_More.IsChecked)
-    }
+    $Session = [PowerShell]::Create().AddScript($syncHash.scan_scriptblock).AddArgument($range.Start).AddArgument($range.end).AddArgument($threshold).AddArgument($syncHash.GUI.cb_More.IsChecked).AddArgument($syncHash.Gui.CB_ARP.IsChecked).AddArgument($syncHash.GUI.CB_CC.IsChecked).AddArgument($delay)
 
     # execute the code in this session
     $Session.RunspacePool = $RunspacePool
