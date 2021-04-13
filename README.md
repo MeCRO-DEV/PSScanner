@@ -7,6 +7,10 @@ Featuring ICMP scan and ARP scan, PSScanner can scan the whole network in a few 
 
 Logon user and serial number: Run the script with an elevated domain admin account which has admin right on all domain computers.
 
+Files:
+PSScanner.ps1  : Requires Windows Powershell 5.0 up with PSParallel module installed
+PSScanner7.ps1 : Requires Powershell Core 7.0 up with ForEach-Object -Parallel supported
+
 Contributions : Pull requests and/or suggestions are more than welcome via email: support@mecro.ca
 
 Screenshot:
