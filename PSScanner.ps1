@@ -238,8 +238,13 @@ $syncHash.Q = New-Object System.Collections.Concurrent.ConcurrentQueue[psobject]
 # To decide updating UI
 [bool]$syncHash.ScanCompleted = $false
 
-# Node counter, thread safe
-[int]$syncHash.Count = 0
+# Node counter, mutex protected
+[int]$syncHash.Count = 0 # Microsoft claimed that synchronized hash table is thread safe, but it's not. I have to use mutex to protect it.
+
+# Global mutex for accessing shared resources in threads
+$Global:createdNew = $False # Stores Boolean value if the current PowerShell Process gets a lock on the Mutex
+# Create the Mutex Object usin the constructuor -> Mutex Constructor (Boolean, String, Boolean)
+$syncHash.mutex = New-Object -TypeName System.Threading.Mutex($false, "Tom", [ref]$Global:createdNew)
 
 # check if there is any thread still running
 Function isThreadRunning {
@@ -264,13 +269,17 @@ $syncHash.Window.add_closing({
         $_.Cancel = $true
         return
     }
-
+    # Cleanup mutex
+    if($syncHash.mutex){
+        $syncHash.mutex.Close()
+        $syncHash.mutex.Dispose()
+    }
     # Stop the timer
     if($syncHash.timer_terminal){
-        $syncHash.timer_terminal.Stop() 2>$null
+        $syncHash.timer_terminal.Stop()
     }
     if($syncHash.timer){
-        $syncHash.timer.Stop() 2>$null
+        $syncHash.timer.Stop()
     }
 })
 
@@ -461,11 +470,11 @@ $syncHash.OutputResult = {
                 $fStream.Close()
             }
         }
-        Remove-Variable -Name "ok" -ErrorAction SilentlyContinue
     }
 }
 
-# Show result in worker threads
+# Show result in worker threads. Initially designed for calling from thread, but later I found it is not thread safe.
+# It can be called from outside of thread
 $syncHash.outputFromThread_scriptblock = {
     param (
         [string]$f,
@@ -689,9 +698,12 @@ $syncHash.scan_scriptblock = {
         return
     }
 
-    $syncHash.Count = 0
     $Time = [System.Diagnostics.Stopwatch]::StartNew()
 
+    $syncHash.mutex.WaitOne()
+    $syncHash.Count = 0
+    $syncHash.mutex.ReleaseMutex()
+    
     # In case of 16 <= CIDR < 24
     if($StartArray[2] -ne $EndArray[2]){
         if($Oct4First -eq 0){
@@ -775,7 +787,9 @@ $syncHash.scan_scriptblock = {
         }
 
         if($test){
+            $syncHash.mutex.WaitOne()
             $syncHash.Count = $syncHash.Count + 1
+            $syncHash.mutex.ReleaseMutex()
 
             $hsEntry = [System.Net.Dns]::GetHostEntry($ip)  # reverse  DNS lookup
                 
@@ -790,6 +804,8 @@ $syncHash.scan_scriptblock = {
             }
                 
             $msg = $ip.PadRight(17,' ') + $cn
+
+            Remove-Variable -Name 'ip'
 
             if($more){
                 $a = query user /server:$cn
@@ -814,7 +830,15 @@ $syncHash.scan_scriptblock = {
                     $msg = $msg.PadRight(69,' ') + "..."
                 }
             }
-            Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","MediumSpringGreen",$msg,$true
+            $objHash = @{
+                font    = "Courier New"
+                size    = "20"
+                color   = "MediumSpringGreen"
+                msg     = $msg
+                newline = $true
+            }
+            $syncHash.Q.Enqueue($objHash)
+            Remove-Variable -Name "objHash"
         }
     }
 
@@ -847,7 +871,9 @@ $syncHash.scan_scriptblock = {
     $msg = "],  Total "
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
 
-    $msg = $syncHash.Count
+    $syncHash.mutex.WaitOne()
+    $msg = ($syncHash.Count).ToString()
+    $syncHash.mutex.ReleaseMutex()
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Magenta",$msg,$false
 
     $msg = " node(s) alive."
@@ -858,7 +884,13 @@ $syncHash.scan_scriptblock = {
 
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
     
+    $syncHash.mutex.WaitOne()
     $syncHash.Count = 0
+    $syncHash.mutex.ReleaseMutex()
+
+    $Time.Stop()
+    Remove-Variable -Name "Time"
+    
     $syncHash.ScanCompleted = $true
 }
 
