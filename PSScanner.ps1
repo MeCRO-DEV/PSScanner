@@ -131,7 +131,7 @@
                     </Style>
                 </TextBlock.Style>
             </TextBlock>
-            <TextBox x:Name="TB_CIDR" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="408,4,0,0" VerticalAlignment="Top" Width="50" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="2" Background="LightYellow" TextAlignment="Center" ToolTip="CIDR [16-31]"/>
+            <TextBox x:Name="TB_CIDR" Text="24" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="408,4,0,0" VerticalAlignment="Top" Width="50" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="2" Background="LightYellow" TextAlignment="Center" ToolTip="CIDR [16-31]"/>
             <TextBlock IsHitTestVisible="False" Text="CIDR" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="412,10,0,0" Foreground="DarkGray">
                 <TextBlock.Style>
                     <Style TargetType="{x:Type TextBlock}">
@@ -144,7 +144,7 @@
                     </Style>
                 </TextBlock.Style>
             </TextBlock>
-            <TextBox x:Name="TB_Threshold" Text="50" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="460,4,0,0" VerticalAlignment="Top" Width="60" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="3" Background="LightYellow" TextAlignment="Center" ToolTip="Runspace capacity [16-128]"/>
+            <TextBox x:Name="TB_Threshold" Text="32" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="460,4,0,0" VerticalAlignment="Top" Width="60" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="3" Background="LightYellow" TextAlignment="Center" ToolTip="Runspace capacity [1-128]"/>
             <TextBlock IsHitTestVisible="False" Text="Threshold" FontFamily="Courier New" FontSize="10" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="462,14,0,0" Foreground="DarkGray">
                 <TextBlock.Style>
                     <Style TargetType="{x:Type TextBlock}">
@@ -770,7 +770,7 @@ $syncHash.scan_scriptblock = {
                 [System.Threading.Thread]::Sleep($DelayMS) # set to 0 when your network is fast, other wise set it higher ( 0 - 9 ms)
             }
         }
-        $IPAddresses | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock $ArpScriptBlock
+        $IPAddresses | Invoke-Parallel -ThrottleLimit $threshold -ProgressActivity "UDP Pinging Progress" -ScriptBlock $ArpScriptBlock
 
         $Hosts = arp -a # Dos command for listing local arp cache
 
@@ -784,7 +784,7 @@ $syncHash.scan_scriptblock = {
         $ips = $IPAddresses # for ICMP scan, we test all IPs
     }
 
-    $ips | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock { # test/query worker thread
+    $ips | Invoke-Parallel -ThrottleLimit $threshold -ProgressActivity "Scanning Progress" -ScriptBlock { # test/query worker thread
         [bool]$test  = $false
         [string]$msg = ""
         [string]$cn  = ""
@@ -914,9 +914,10 @@ $syncHash.GUI.BTN_Scan.Add_Click({
     [int]$delay = 0
 
     # Threshold validation
-    [int]$threshold = 50
+    [int]$threshold = 32
     if([string]::IsNullOrEmpty($syncHash.Gui.TB_Threshold.text)){
-        $syncHash.Gui.TB_Threshold.text = "50"
+        $syncHash.Gui.TB_Threshold.text = "32"
+        $threshold = 32
     } else {
         $threshold = ($syncHash.GUI.TB_Threshold.text) -as [int]
     }
@@ -924,9 +925,9 @@ $syncHash.GUI.BTN_Scan.Add_Click({
         $threshold = 128
         $syncHash.Gui.TB_Threshold.text = "128"
     }
-    if($threshold -lt 16) {
-        $threshold = 16
-        $syncHash.Gui.TB_Threshold.text = "16"
+    if($threshold -lt 1) {
+        $threshold = 1
+        $syncHash.Gui.TB_Threshold.text = "1"
     }
 
     if($syncHash.GUI.CB_ARP.isChecked){
@@ -1014,7 +1015,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
         $msg = "[ICMP] "
     }
     Show-Result -Font "Courier New" -Size "18" -Color "Lime" -Text $msg -NewLine $false
-    $msg = "Creating worker threads with threshold $threshold ..."
+    $msg = "Creating worker threads with Runspace capacity $threshold ..."
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
 
     Invoke-Command $syncHash.Devider_scriptblock -ErrorAction SilentlyContinue
