@@ -365,6 +365,16 @@ $syncHash.Gui.TB_Delay.Add_TextChanged({
     }
 })
 
+# CIDR input validation
+$syncHash.Gui.TB_CIDR.Add_TextChanged({
+    if ($this.Text -match '[^0-9]') {
+        $cursorPos = $this.SelectionStart
+        $this.Text = $this.Text -replace '[^0-9]',''
+        $this.SelectionStart = $cursorPos - 1
+        $this.SelectionLength = 0
+    }
+})
+
 # When focus is on the output window, press ESC key to clear the output
 $handler_keypress = {
     [string]$key = ($_.key).ToString()
