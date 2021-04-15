@@ -22,7 +22,7 @@ This project can be a template for any Powershell/WPF application development.
 Usage:
 
 1) IP Address: Any IP in the target subnet
-2) Subnet mask or CIDR of your choice
+2) Subnet mask or CIDR of your choice. CIDR default to 24.
 3) Runspace capacity: [1-128]. To control the degree of parallelism, i.e. the number of concurrent runspaces, use the -ThrottleLimit parameter as I call it Runspace capacity. Default value is 32.
 4) Check "More" to show current logon user and serial number on each live node.
 5) Check ARP to use ARP scan. This is limited to the local network as ARP is a layer-2 protocol. ARP-Scanning a network which differs from the one your computer is on will be resulting zero nodes alive. ARP scan will exclude the IP of your own computer on which this script is running.
