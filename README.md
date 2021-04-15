@@ -30,6 +30,7 @@ Usage:
 7) Clear ARP cache before scanning: For the most accurate result, please clear the cache so you woudn't get any disconnected nodes and won't miss any new nodes.
 8) Output will be saved to c:\PSScanner once the scanning process completed.
 9) To clear the output window, click anywhere on the black area and press ESC key.
+10) Limitation: Minimum CIDR is 16 or subnet mask 255.255.0.0. This tool is tageted on corperate LAN, rather than WAN.
 
 Files:
 
