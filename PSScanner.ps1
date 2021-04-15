@@ -195,7 +195,7 @@ try{
     Throw "Failed to load WPF assemblies, script terminated."
 }
 
-# Initialize Hashtable and main window
+# Initialize synchronized Hashtable and main window
 $syncHash = [hashtable]::Synchronized(@{})
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $syncHash.window = [Windows.Markup.XamlReader]::Load($reader)
@@ -235,10 +235,10 @@ $syncHash.Jobs = [System.Collections.ArrayList]@()
 # Concurrent Q for output
 $syncHash.Q = New-Object System.Collections.Concurrent.ConcurrentQueue[psobject]
 
-# To decide updating UI
+# Control variable to trigger updating UI
 [bool]$syncHash.ScanCompleted = $false
 
-# Node counter, mutex protected
+# Live Node counter, mutex protected
 [int]$syncHash.Count = 0 # Microsoft claimed that synchronized hash table is thread safe, but it's not. I have to use mutex to protect it.
 
 # Global mutex for accessing shared resources in threads
@@ -261,7 +261,7 @@ Function isThreadRunning {
     return $false
 }
 
-# check if a thread is still running when exiting the GUI
+# check if a thread is still running when exiting the GUI amd clean up when closing
 $syncHash.Window.add_closing({
     [bool]$running = isThreadRunning
     if($running){
@@ -274,7 +274,7 @@ $syncHash.Window.add_closing({
         $syncHash.mutex.Close()
         $syncHash.mutex.Dispose()
     }
-    # Stop the timer
+    # Stop the timers
     if($syncHash.timer_terminal){
         $syncHash.timer_terminal.Stop()
     }
@@ -375,7 +375,7 @@ $syncHash.Gui.TB_CIDR.Add_TextChanged({
     }
 })
 
-# When focus is on the output window, press ESC key to clear the output
+# When focus is on the output window, press ESC key to clear the output window
 $handler_keypress = {
     [string]$key = ($_.key).ToString()
     if($key -match "Escape"){
@@ -466,9 +466,9 @@ $syncHash.OutputResult = {
     if(!($syncHash.Q.IsEmpty)){
         [bool]$ok = $syncHash.Q.TryDequeue([ref]$objHash)
 
-        if($ok){
+        if($ok){ # There is something ready to display
             Show-Result -Font $objHash.font -Size $objHash.size -Color $objHash.color -Text $objHash.msg -NewLine $objHash.newline
-            if($objHash.msg -match "completed"){
+            if($objHash.msg -match "completed"){ # When completed, save the result to a file located in c:\PSScanner
                 if(!(Test-Path -Path "C:\PSScanner")) {
                     New-Item -Path "C:\PSScanner" -type directory -Force -ErrorAction Ignore -WarningAction Ignore -InformationAction Ignore | Out-Null
                 }
@@ -542,7 +542,7 @@ $syncHash.updateUI = {
             $syncHash.Gui.CB_CC.IsEnabled    = $false
         }
 
-        if(!(isThreadRunning)){ $syncHash.Gui.PB.IsIndeterminate = $false }
+        if(!(isThreadRunning)){ $syncHash.Gui.PB.IsIndeterminate = $false } # stop progressbar animation
     }
 }
 
@@ -551,7 +551,7 @@ $syncHash.timer = new-object System.Windows.Threading.DispatcherTimer
 
 # Setup timer and callback for updating GUI
 $syncHash.Window.Add_SourceInitialized({            
-    $syncHash.timer.Interval = [TimeSpan]"0:0:5.00"
+    $syncHash.timer.Interval = [TimeSpan]"0:0:5.00" # 5 seconds delay
     $syncHash.timer.Add_Tick( $syncHash.updateUI )
     $syncHash.timer.Start()
 })
@@ -674,7 +674,7 @@ $syncHash.Devider_scriptblock = {
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text "=" -NewLine $true
 }
 
-# Ping or ARP Scan
+# Ping or ARP Scan worker thread
 $syncHash.scan_scriptblock = {
     param(
         [string]$start,   # Start IP
@@ -714,6 +714,7 @@ $syncHash.scan_scriptblock = {
     $syncHash.Count = 0
     $syncHash.mutex.ReleaseMutex()
     
+    # Calculate IP address set based on IP range
     # In case of 16 <= CIDR < 24
     if($StartArray[2] -ne $EndArray[2]){
         if($Oct4First -eq 0){
@@ -756,7 +757,7 @@ $syncHash.scan_scriptblock = {
             arp -d # Clear ARP cache
         }
 
-        $ArpScriptBlock = {
+        $ArpScriptBlock = { # Thread to send out UDP requests. When the IP is not in local arp cache, Windows will send arp request broadcast, then the local arp cache is built
             $ASCIIEncoding = New-Object System.Text.ASCIIEncoding
             $Bytes = $ASCIIEncoding.GetBytes("a")
             $UDP = New-Object System.Net.Sockets.Udpclient
@@ -765,24 +766,24 @@ $syncHash.scan_scriptblock = {
             [void]$UDP.Send($Bytes,$Bytes.length)
 
             if ($DelayMS) {
-                [System.Threading.Thread]::Sleep($DelayMS)
+                [System.Threading.Thread]::Sleep($DelayMS) # set to 0 when your network is fast, other wise set it higher ( 0 - 9 ms)
             }
         }
         $IPAddresses | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock $ArpScriptBlock
 
-        $Hosts = arp -a
+        $Hosts = arp -a # Dos command for listing local arp cache
 
         $Hosts = $Hosts | Where-Object {$_ -match "dynamic"} | ForEach-Object {($_.trim() -replace " {1,}",",") | ConvertFrom-Csv -Header "IP","MACAddress"}
         $Hosts = $Hosts | Where-Object {$_.IP -in $IPAddresses}
     }
 
     if($arp){
-        $ips = $Hosts
+        $ips = $Hosts # for arp scan, we only query the live nodes
     } else {
-        $ips = $IPAddresses
+        $ips = $IPAddresses # for ICMP scan, we test all IPs
     }
 
-    $ips | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock {
+    $ips | Invoke-Parallel -ThrottleLimit $threshold -NoProgress -ScriptBlock { # test/query worker thread
         [bool]$test  = $false
         [string]$msg = ""
         [string]$cn  = ""
@@ -796,12 +797,12 @@ $syncHash.scan_scriptblock = {
             $test = [bool](Test-Connection -BufferSize 32 -Count 3 -ComputerName $ip -ErrorAction SilentlyContinue)
         }
 
-        if($test){
+        if($test){ # for arp, all nodes are alive. for ICMP, Test-Connection return value will tell you if it is alive
             $syncHash.mutex.WaitOne()
             $syncHash.Count = $syncHash.Count + 1
             $syncHash.mutex.ReleaseMutex()
 
-            $hsEntry = [System.Net.Dns]::GetHostEntry($ip)  # reverse  DNS lookup
+            $hsEntry = [System.Net.Dns]::GetHostEntry($ip)  # reverse DNS lookup
                 
             if($hsEntry){
                 if($more){
@@ -818,7 +819,7 @@ $syncHash.scan_scriptblock = {
             Remove-Variable -Name 'ip'
 
             if($more){
-                $a = query user /server:$cn
+                $a = query user /server:$cn # Query current logon user
                 if($a){
                     $b = ((($a[1]) -replace '^>', '') -replace '\s{2,}', ',').Trim() | ForEach-Object {
                         if ($_.Split(',').Count -eq 5) {
@@ -832,7 +833,8 @@ $syncHash.scan_scriptblock = {
                     $c = "..."
                 }
                 $msg = $msg.PadRight(49,' ') + $c
-                    
+                
+                # WMI remote query serial number, works only when RPC is running on the target
                 $sn = (Get-WmiObject -ComputerName $cn -class win32_bios).SerialNumber
                 if($sn){
                     $msg = $msg.PadRight(69,' ') + $sn                    } 
@@ -840,6 +842,7 @@ $syncHash.scan_scriptblock = {
                     $msg = $msg.PadRight(69,' ') + "..."
                 }
             }
+            # we need to limit local function call as less as possible
             $objHash = @{
                 font    = "Courier New"
                 size    = "20"
@@ -852,6 +855,7 @@ $syncHash.scan_scriptblock = {
         }
     }
 
+    # total alive nodes
     if($arp){
         $total = $Hosts.Count
     } else {
@@ -1034,9 +1038,10 @@ $syncHash.GUI.BTN_Scan.Add_Click({
         'Handle' = $Handle
     })
 
-    $syncHash.Gui.PB.IsIndeterminate = $true
+    $syncHash.Gui.PB.IsIndeterminate = $true # start progressbar animation
 })
 
+# Handle ? button press
 $syncHash.Gui.BTN_About.add_click({
     $copyright = [char]169
     [int]$i = 0
