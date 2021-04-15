@@ -6,7 +6,9 @@ It is a WPF application written in Powershell; it depents on PSParallel module f
 Featuring ICMP scan and ARP scan, PSScanner can scan the whole network in a few minutes.
 
 Logon user query method: Reverse DNS resolution
+
 Serial number query: WMI remote query. RPC needs to be running on each target otherwise the result will be "...". Domain admin right required.
+
 Arp clear cache: Local admin right required.
 
 This project can be a template for any Powershell/WPF application development.
