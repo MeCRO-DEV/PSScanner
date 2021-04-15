@@ -14,7 +14,7 @@ Arp clear cache: Local admin right required.
 This project can be a template for any Powershell/WPF application development.
 
 1) RunspacePool management
-2) Passing data from worker threads to UI threads, the best way is using dispatcher timer, rather than dispatcher invoke which freezes the UI.
+2) Passing data from worker threads to UI thread, the best way is using dispatcher timer, rather than dispatcher invoke which freezes the UI.
 3) A good producer/consumer model implementation using Concurrent Queue Collection from .Net, it is thread safe.
 4) Utilizing Mutex to protect shared variables
 5) Designing UI by directly editing xaml file, no UI designer software required (Visual Studio, etc.)
