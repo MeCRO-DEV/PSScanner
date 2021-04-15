@@ -25,7 +25,7 @@ Usage:
 2) Subnet mask or CIDR of your choice
 3) Runspace capacity: [16-128]. To control the degree of parallelism, i.e. the number of concurrent runspaces, use the -ThrottleLimit parameter as I call it Runspace capacity.
 4) Check "More" to show current logon user and serial number on each live node.
-5) Check ARP to use ARP scan. This is limited to the local network as ARP is a layer-2 protocol. ARP-Scanning a network which differs from the one your computer is on will be resulting zero nodes alive.
+5) Check ARP to use ARP scan. This is limited to the local network as ARP is a layer-2 protocol. ARP-Scanning a network which differs from the one your computer is on will be resulting zero nodes alive. ARP scan will exclude your own computer on which this script is running.
 6) ARP Ping delay [0-9ms]: Delay(ms) between 2 arp probes. I use UDP request for this type of probing.
 7) Clear ARP cache before scanning: For the most accurate result, please clear the cache so you woudn't get any disconnected nodes and won't miss any new nodes.
 
