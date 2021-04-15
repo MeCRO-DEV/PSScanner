@@ -662,6 +662,7 @@ function Get-IPrange{
     return $temp 
 }
 
+# Make a colorful ribon for the output
 $syncHash.Devider_scriptblock = {
     for($i=0;$i -lt 88;$i++) {
         if($i%2 -eq 0) {
@@ -695,14 +696,14 @@ $syncHash.scan_scriptblock = {
     [int]$Oct4Last  = $EndArray[3]   -as [int]
 
     if($StartArray[0] -ne $EndArray[0]){
-        $msg = "IP range too large to handle, CIDR >= 16"
+        $msg = "IP range too large to handle. [CIDR >= 16] or [Subnet Mask >= 255.255.0.0]"
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
         $syncHash.ScanCompleted = $true
         return
     }
 
     if($StartArray[1] -ne $EndArray[1]){
-        $msg = "IP range too large to handle, CIDR should be larger than 16"
+        $msg = "IP range too large to handle. [CIDR >= 16] or [Subnet Mask >= 255.255.0.0]"
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
         $syncHash.ScanCompleted = $true
         return
@@ -963,6 +964,12 @@ $syncHash.GUI.BTN_Scan.Add_Click({
             return
         }
 
+        if(!($syncHash.Gui.TB_NetMask.text.SubString(0,8) -eq '255.255.')){
+            $msg = "IP range too large to handle. [CIDR >= 16] or [Subnet Mask >= 255.255.0.0]"
+            Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text $msg -NewLine $true
+            return
+        }
+
         $mask = ($syncHash.GUI.TB_NetMask.text)
 
         $range = Get-IPrange -ip $ip -mask $mask
@@ -984,8 +991,8 @@ $syncHash.GUI.BTN_Scan.Add_Click({
         }
         $cidr = $syncHash.GUI.TB_CIDR.text -as [int]
         if($cidr -lt 16 -or $cidr -gt 31){
-            $msg = "CIDR is out of range. Minimum value is 16"
-            Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
+            $msg = "IP range too large to handle. [CIDR >= 16] or [Subnet Mask >= 255.255.0.0]"
+            Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text $msg -NewLine $true
             return
         }
         $range = Get-IPrange -ip $ip -cidr $cidr
