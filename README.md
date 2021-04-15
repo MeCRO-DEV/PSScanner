@@ -28,6 +28,8 @@ Usage:
 5) Check ARP to use ARP scan. This is limited to the local network as ARP is a layer-2 protocol. ARP-Scanning a network which differs from the one your computer is on will be resulting zero nodes alive. ARP scan will exclude the IP of your own computer on which this script is running.
 6) ARP Ping delay [0-9ms]: Delay(ms) between 2 arp probes. I use UDP request for this type of probing.
 7) Clear ARP cache before scanning: For the most accurate result, please clear the cache so you woudn't get any disconnected nodes and won't miss any new nodes.
+8) Output will be saved to c:\PSScanner once the scanning process completed.
+9) To clear the output window, click anywhere on the black area and press ESC key.
 
 Files:
 
