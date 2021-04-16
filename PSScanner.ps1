@@ -144,7 +144,7 @@
                     </Style>
                 </TextBlock.Style>
             </TextBlock>
-            <TextBox x:Name="TB_Threshold" Text="32" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="460,4,0,0" VerticalAlignment="Top" Width="60" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="3" Background="LightYellow" TextAlignment="Center" ToolTip="Runspace capacity [1-128]"/>
+            <TextBox x:Name="TB_Threshold" Text="32" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="460,4,0,0" VerticalAlignment="Top" Width="60" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="3" Background="LightYellow" TextAlignment="Center" ToolTip="Runspacepool capacity [1-128]"/>
             <TextBlock IsHitTestVisible="False" Text="Threshold" FontFamily="Courier New" FontSize="10" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="462,14,0,0" Foreground="DarkGray">
                 <TextBlock.Style>
                     <Style TargetType="{x:Type TextBlock}">
@@ -1015,7 +1015,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
         $msg = "[ICMP] "
     }
     Show-Result -Font "Courier New" -Size "18" -Color "Lime" -Text $msg -NewLine $false
-    $msg = "Creating worker threads with Runspace capacity $threshold ..."
+    $msg = "Creating worker threads with Runspacepool capacity $threshold ..."
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
 
     Invoke-Command $syncHash.Devider_scriptblock -ErrorAction SilentlyContinue
