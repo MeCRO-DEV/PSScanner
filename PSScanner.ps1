@@ -281,6 +281,7 @@ $syncHash.Window.add_closing({
     if($syncHash.timer){
         $syncHash.timer.Stop()
     }
+    Unregister-Event -SourceIdentifier Process_Result -Force
 })
 
 # Clean up the runspaces when exiting the GUI
@@ -474,10 +475,11 @@ $syncHash.OutputResult = {
                 }
                 $range   = New-Object System.Windows.Documents.TextRange($syncHash.Gui.RTB_Output.Document.ContentStart, $syncHash.Gui.RTB_Output.Document.ContentEnd)
                 $dt = Get-Date -Format "MM-dd-yyyy-HH-mm-ss"
-                $path = "c:\PSScanner\" + '[' + $dt + ']' + '-output.txt'
+                $path = "c:\PSScanner\" + '(' + $dt + ')' + '-output.txt'
                 $fStream = [System.IO.FileStream]::New($path, [System.IO.FileMode]::Create)
                 $range.Save($fStream, [System.Windows.DataFormats]::Text)
                 $fStream.Close()
+                New-Event -SourceIdentifier Process_Result -MessageData $path
             }
         }
     }
@@ -555,6 +557,90 @@ $syncHash.Window.Add_SourceInitialized({
     $syncHash.timer.Add_Tick( $syncHash.updateUI )
     $syncHash.timer.Start()
 })
+
+# Setup event handler to sort the output file
+$syncHash.PostPocess = {
+    [string]$path = $event.messagedata
+    $o = [System.Collections.ArrayList]@() # Original
+    $h = [System.Collections.ArrayList]@() # header
+    $f = [System.Collections.ArrayList]@() # Footer
+    $w = [System.Collections.ArrayList]@() # Working collection
+
+    function swapme{
+        param(
+            [int]$a,
+            [int]$b
+        )
+        [string]$t = $w[$a]
+        [string]$s = $o[$a]
+
+        $w[$a] = $w[$b]
+        $o[$a] = $o[$b]
+        $w[$b] = $t
+        $o[$b] = $s
+    }
+
+    function sortme { # Simple Bubble Sort algorithm
+        [bool]$swapped = $true
+
+        while($swapped){
+            $swapped = $false
+            for([int]$i = 0; $i -lt ($w.Count - 1); $i++){
+                if($w[$i] -gt $w[$i+1]){
+                    swapme -a $i -b ($i+1)
+                    $swapped = $true
+                }
+            }
+        }
+    }
+
+    $reader = [System.IO.File]::OpenText($path)
+    try {
+        while (($line = $reader.ReadLine()) -ne $null)
+        {
+            $t = $o.Add($line)
+        }
+    }
+    finally {
+        $reader.Close()
+    }
+
+    for($i=0; $i -lt 7; $i++) {
+        $t = $h.Add($o[$i])
+    }
+    $o.RemoveRange(0,7)
+
+    $e = $o.IndexOf("     ")
+    $n = $o.Count - $e
+    for($i=$e; $i -le $o.Count; $i++) {
+        $t = $f.Add($o[$i])
+    }
+    $o.RemoveRange($e,$n)
+
+    for($i = 0; $i -lt $o.Count; $i++) {
+        $p = ($o[$i].Substring(0, 15)).trim().Split('.')
+        for($j = 0; $j -lt 4; $j++){
+            $p[$j] = $p[$j].Padleft(3,'0')
+        }
+        $t = $w.Add($p[0] + '.' + $p[1] + '.' + $p[2] + '.' + $p[3])
+    }
+
+    sortme
+
+    for([int]$i = $h.Count - 1; $i -ge 0; $i--){
+        $o.Insert(0, $h[$i])
+    }
+
+    for([int]$i = 0; $i -lt $f.Count; $i++){
+        $t = $o.Add($f[$i])
+    }
+
+    $o | Out-File $path
+
+    Rename-Item -Path $path -NewName $path.Replace("output", "Sorted") -Force
+}
+
+$null = Register-EngineEvent -SourceIdentifier Process_Result -Action $syncHash.PostPocess
 
 # IP address validation
 Function Test-IPAddress {
@@ -750,6 +836,9 @@ $syncHash.scan_scriptblock = {
     if($more){
         $msg = $msg.PadRight(49,' ') + "Logon-User"
         $msg = $msg.PadRight(69,' ') + "SerialNumber"
+        if($arp) { $msg = $msg.PadRight(83,' ') + "MAC-Address" }
+    } else {
+        if($arp) { $msg = $msg.PadRight(64,' ') + "MAC-Address" }
     }
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
 
@@ -789,10 +878,12 @@ $syncHash.scan_scriptblock = {
         [string]$msg = ""
         [string]$cn  = ""
         [string]$ip  = ""
+        [string]$mac = ""
         
         if($arp){
             $test = $true
             $ip = $_.IP
+            $mac = $_.MACAddress
         } else {
             $ip = $_
             $test = [bool](Test-Connection -BufferSize 32 -Count 3 -ComputerName $ip -ErrorAction SilentlyContinue)
@@ -842,6 +933,14 @@ $syncHash.scan_scriptblock = {
                 else {
                     $msg = $msg.PadRight(69,' ') + "..."
                 }
+
+                if($arp){
+                    $msg = $msg.PadRight(83,' ') + $mac
+                }
+            } else {
+                if($arp){
+                    $msg = $msg.PadRight(64,' ') + $mac
+                }
             }
             # we need to limit local function call as less as possible
             $objHash = @{
@@ -853,6 +952,7 @@ $syncHash.scan_scriptblock = {
             }
             $syncHash.Q.Enqueue($objHash)
             Remove-Variable -Name "objHash"
+            Remove-Variable -Name "mac"
         }
     }
 
@@ -911,6 +1011,8 @@ $syncHash.scan_scriptblock = {
 
 # Handle Scan Button click event
 $syncHash.GUI.BTN_Scan.Add_Click({
+    $syncHash.Gui.rtb_Output.Document.Blocks.Clear()
+
     [int]$delay = 0
 
     # Threshold validation
