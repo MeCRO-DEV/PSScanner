@@ -185,6 +185,8 @@
 
 Import-Module PSParallel
 
+Set-StrictMode -Version Latest
+
 $emoji_about  = [char]::ConvertFromUtf32(0x02753) # ❓
 $emoji_box_h  = [char]::ConvertFromUtf32(0x02501) # ━
 
@@ -281,6 +283,7 @@ $syncHash.Window.add_closing({
     if($syncHash.timer){
         $syncHash.timer.Stop()
     }
+
     Unregister-Event -SourceIdentifier Process_Result -Force
 })
 
@@ -288,7 +291,7 @@ $syncHash.Window.add_closing({
 $syncHash.Window.add_closed({
     foreach($Job in $syncHash.Jobs)
     {
-        if ($Job.Session.IsCompleted -eq $true)
+        if ($Job.handle.IsCompleted -eq $true)
         {
             $Job.Session.EndInvoke($Job.Handle)
         }
@@ -381,18 +384,6 @@ $handler_keypress = {
     [string]$key = ($_.key).ToString()
     if($key -match "Escape"){
         $syncHash.Gui.rtb_Output.Document.Blocks.Clear()
-    }
-    if($key -match "F12"){
-        if(!(Test-Path -Path "C:\PSScanner")) {
-            New-Item -Path "C:\PSScanner" -type directory -Force -ErrorAction Ignore -WarningAction Ignore -InformationAction Ignore | Out-Null
-        }
-        $range   = New-Object System.Windows.Documents.TextRange($syncHash.Gui.RTB_Output.Document.ContentStart, $syncHash.Gui.RTB_Output.Document.ContentEnd)
-        $dt = Get-Date -Format "MM-dd-yyyy-HH-mm-ss"
-        $path = "c:\PSScanner\" + '[' + $dt + ']' + '-output.txt'
-        $fStream = [System.IO.FileStream]::New($path, [System.IO.FileMode]::Create)
-        $range.Save($fStream, [System.Windows.DataFormats]::Text)
-        $fStream.Close()
-        Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text "Screen saved." -NewLine $true
     }
 }
 $syncHash.Gui.RTB_Output.add_KeyDown($handler_keypress)
@@ -750,7 +741,7 @@ function Get-IPrange{
 
 # Make a colorful ribon for the output
 $syncHash.Devider_scriptblock = {
-    for($i=0;$i -lt 88;$i++) {
+    for([int]$i=0;$i -lt 88;$i++) {
         if($i%2 -eq 0) {
             Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text "=" -NewLine $false
         }
@@ -780,6 +771,7 @@ $syncHash.scan_scriptblock = {
     [int]$Oct3Last  = $EndArray[2]   -as [int]
     [int]$Oct4First = $StartArray[3] -as [int]
     [int]$Oct4Last  = $EndArray[3]   -as [int]
+    [string]$msg    = ""
 
     if($StartArray[0] -ne $EndArray[0]){
         $msg = "IP range too large to handle. [CIDR >= 16] or [Subnet Mask >= 255.255.0.0]"
@@ -795,7 +787,7 @@ $syncHash.scan_scriptblock = {
         return
     }
 
-    $Time = [System.Diagnostics.Stopwatch]::StartNew()
+    [System.Diagnostics.Stopwatch]$Time = [System.Diagnostics.Stopwatch]::StartNew()
 
     $syncHash.mutex.WaitOne()
     $syncHash.Count = 0
@@ -1180,9 +1172,7 @@ $syncHash.Gui.BTN_About.add_click({
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "ESC" -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text " to clear output when focused" -NewLine $false
-    Show-Result -Font "Courier New" -Size "18" -Color "Chartreuse" -Text "  Auto-save result to C:\PSScanner" -NewLine $false
-    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text "  Manual-save" -NewLine $false
-    Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text " F12" -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Chartreuse" -Text "  Auto-save sorted result to C:\PSScanner" -NewLine $true
 
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
 
