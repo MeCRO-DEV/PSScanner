@@ -183,9 +183,14 @@
     </Window>
 }
 
-Import-Module PSParallel
-
 Set-StrictMode -Version Latest
+
+# Setup dependency for the 1st time
+if (!(Get-Module -ListAvailable -Name PSParallel)) {
+    Install-Module -Name PSParallel -Scope AllUsers -Force -Confirm:$false
+}
+
+Import-Module PSParallel
 
 $emoji_about  = [char]::ConvertFromUtf32(0x02753) # ❓
 $emoji_box_h  = [char]::ConvertFromUtf32(0x02501) # ━
@@ -476,8 +481,7 @@ $syncHash.OutputResult = {
     }
 }
 
-# Show result in worker threads. Initially designed for calling from thread, but later I found it is not thread safe.
-# It can be called from outside of thread
+# Show result from middle thread($syncHash.scan_scriptblock). This function is NOT reentrant, so it CANNOT be called by worker threads.
 $syncHash.outputFromThread_scriptblock = {
     param (
         [string]$f,
@@ -752,7 +756,7 @@ $syncHash.Devider_scriptblock = {
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text "=" -NewLine $true
 }
 
-# Ping or ARP Scan worker thread
+# Ping or ARP Scan middle thread, it will fork the worker threads.
 $syncHash.scan_scriptblock = {
     param(
         [string]$start,   # Start IP
@@ -839,7 +843,8 @@ $syncHash.scan_scriptblock = {
             arp -d # Clear ARP cache
         }
 
-        $ArpScriptBlock = { # Thread to send out UDP requests. When the IP is not in local arp cache, Windows will send arp request broadcast, then the local arp cache is built
+        # UDP probing worker thread
+        $ArpScriptBlock = { # Thread to send out UDP requests. When the IP is not in local arp cache, OS will send arp request broadcast, then the local arp cache is built.
             $ASCIIEncoding = New-Object System.Text.ASCIIEncoding
             $Bytes = $ASCIIEncoding.GetBytes("a")
             $UDP = New-Object System.Net.Sockets.Udpclient
@@ -851,7 +856,8 @@ $syncHash.scan_scriptblock = {
                 [System.Threading.Thread]::Sleep($DelayMS) # set to 0 when your network is fast, other wise set it higher ( 0 - 9 ms)
             }
         }
-        $IPAddresses | Invoke-Parallel -ThrottleLimit $threshold -ProgressActivity "UDP Pinging Progress" -ScriptBlock $ArpScriptBlock
+        # Forking worker threads using PSParallel
+        $IPAddresses | Invoke-Parallel -ThrottleLimit $threshold -ProgressActivity "UDP Pinging Progress" -ScriptBlock $ArpScriptBlock # UDP probing worker threads
 
         $Hosts = arp -a # Dos command for listing local arp cache
 
@@ -865,7 +871,8 @@ $syncHash.scan_scriptblock = {
         $ips = $IPAddresses # for ICMP scan, we test all IPs
     }
 
-    $ips | Invoke-Parallel -ThrottleLimit $threshold -ProgressActivity "Scanning Progress" -ScriptBlock { # test/query worker thread
+    # Forking worker threads using PSParallel
+    $ips | Invoke-Parallel -ThrottleLimit $threshold -ProgressActivity "Scanning Progress" -ScriptBlock { # test/query worker threads
         [bool]$test  = $false
         [string]$msg = ""
         [string]$cn  = ""
@@ -1003,9 +1010,9 @@ $syncHash.scan_scriptblock = {
 
 # Handle Scan Button click event
 $syncHash.GUI.BTN_Scan.Add_Click({
-    $syncHash.Gui.rtb_Output.Document.Blocks.Clear()
-
     [int]$delay = 0
+
+    $syncHash.Gui.rtb_Output.Document.Blocks.Clear() # Clear output window
 
     # Threshold validation
     [int]$threshold = 32
@@ -1038,7 +1045,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
         return
     }
 
-    if(!(Test-IPAddress($syncHash.Gui.TB_IPAddress.text))){
+    if(!(Test-IPAddress($syncHash.Gui.TB_IPAddress.text))){ # IP Address validation
         $msg = "Illegal IP address detected."
         Show-Result -Font "Courier New" -Size "20" -Color "Red" -Text $msg -NewLine $true
         return
@@ -1046,7 +1053,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
 
     [string]$ip = $syncHash.GUI.TB_IPAddress.text
 
-    if($syncHash.GUI.RB_Mask.IsChecked){
+    if($syncHash.GUI.RB_Mask.IsChecked){ # Subnet mask validation
         if([string]::IsNullOrEmpty($syncHash.Gui.TB_NetMask.text)){
             $msg = "Please provide the network mask."
             Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
@@ -1078,7 +1085,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
         Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
     }
 
-    if($syncHash.GUI.RB_CIDR.IsChecked){
+    if($syncHash.GUI.RB_CIDR.IsChecked){ # CIDR validation
         if([string]::IsNullOrEmpty($syncHash.Gui.TB_CIDR.text)){
             $msg = "Please provide CIDR."
             Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
@@ -1112,7 +1119,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
     $msg = "Creating worker threads with Runspacepool capacity $threshold ..."
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
 
-    Invoke-Command $syncHash.Devider_scriptblock -ErrorAction SilentlyContinue
+    Invoke-Command $syncHash.Devider_scriptblock -ErrorAction SilentlyContinue # Draw a colorful ribon
 
     # Disable wedgets
     $syncHash.Gui.TB_IPAddress.IsEnabled = $false
@@ -1129,7 +1136,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
     $syncHash.Gui.TB_Delay.IsEnabled     = $false
     $syncHash.Gui.CB_CC.IsEnabled        = $false
 
-    # create the extra Powershell session and add the script block to execute
+    # create an extra Powershell session and add the script block to execute
     $Session = [PowerShell]::Create().AddScript($syncHash.scan_scriptblock).AddArgument($range.Start).AddArgument($range.end).AddArgument($threshold).AddArgument($syncHash.GUI.cb_More.IsChecked).AddArgument($syncHash.Gui.CB_ARP.IsChecked).AddArgument($syncHash.GUI.CB_CC.IsChecked).AddArgument($delay)
 
     # execute the code in this session
@@ -1207,7 +1214,7 @@ $syncHash.Gui.BTN_About.add_click({
     }
 })
 
-# Set target focused when app starts
+# Set IPAddress focused when app starts
 $syncHash.Gui.TB_IPAddress.Template.FindName("PART_EditableTextBox", $syncHash.Gui.TB_IPAddress)
 
 # Entering main message loop
