@@ -118,7 +118,7 @@
                     </Style>
                 </TextBlock.Style>
             </TextBlock>
-            <TextBox x:Name="TB_NetMask" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="206,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center" ToolTip="Minimum [255.255.0.0]"/>
+            <TextBox x:Name="TB_NetMask" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="206,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center" ToolTip="Minimum [255.0.0.0]"/>
             <TextBlock IsHitTestVisible="False" Text="Subnet Mask" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" Foreground="DarkGray">
                 <TextBlock.Style>
                     <Style TargetType="{x:Type TextBlock}">
@@ -131,7 +131,7 @@
                     </Style>
                 </TextBlock.Style>
             </TextBlock>
-            <TextBox x:Name="TB_CIDR" Text="24" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="408,4,0,0" VerticalAlignment="Top" Width="50" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="2" Background="LightYellow" TextAlignment="Center" ToolTip="CIDR [16-31]"/>
+            <TextBox x:Name="TB_CIDR" Text="24" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="408,4,0,0" VerticalAlignment="Top" Width="50" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="2" Background="LightYellow" TextAlignment="Center" ToolTip="CIDR [8-31]"/>
             <TextBlock IsHitTestVisible="False" Text="CIDR" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="412,10,0,0" Foreground="DarkGray">
                 <TextBlock.Style>
                     <Style TargetType="{x:Type TextBlock}">
@@ -301,6 +301,7 @@ $syncHash.Window.add_closed({
             $Job.Session.EndInvoke($Job.Handle)
         }
         $RunspacePool.Close()
+        $RunspacePool.Dispose()
     }
 })
 
@@ -653,7 +654,8 @@ Function Test-IPAddress {
 # Subnet mask validation
 function CheckSubnetMask ($SubnetMask)
 {
-	$IsValid = $true
+    [string]$strFullBinary = ""
+    [bool]$IsValid = $true
 	$MaskParts = @()
 	$MaskParts +=$SubnetMask.split(".")
 
@@ -771,6 +773,8 @@ $syncHash.scan_scriptblock = {
     $StartArray = $start.Split('.')
     $EndArray = $end.Split('.')
 
+    [int]$Oct2First = $StartArray[1] -as [int]
+    [int]$Oct2Last  = $EndArray[1]   -as [int]
     [int]$Oct3First = $StartArray[2] -as [int]
     [int]$Oct3Last  = $EndArray[2]   -as [int]
     [int]$Oct4First = $StartArray[3] -as [int]
@@ -778,14 +782,7 @@ $syncHash.scan_scriptblock = {
     [string]$msg    = ""
 
     if($StartArray[0] -ne $EndArray[0]){
-        $msg = "IP range too large to handle. [CIDR >= 16] or [Subnet Mask >= 255.255.0.0]"
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
-        $syncHash.ScanCompleted = $true
-        return
-    }
-
-    if($StartArray[1] -ne $EndArray[1]){
-        $msg = "IP range too large to handle. [CIDR >= 16] or [Subnet Mask >= 255.255.0.0]"
+        $msg = "IP range too large to handle. [CIDR >= 8] or [Subnet Mask >= 255.0.0.0]"
         Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
         $syncHash.ScanCompleted = $true
         return
@@ -796,10 +793,30 @@ $syncHash.scan_scriptblock = {
     $syncHash.mutex.WaitOne()
     $syncHash.Count = 0
     $syncHash.mutex.ReleaseMutex()
-    
+
     # Calculate IP address set based on IP range
+    # In case of 8 <= CIDR < 16
+    if(($StartArray[0] -eq $EndArray[0]) -and ($StartArray[1] -ne $EndArray[1])){
+        if($Oct4First -eq 0){
+            $Oct4First++
+        }
+
+        if($Oct4Last -eq 255){
+            $Oct4Last--
+        }
+
+        $IPAddresses = $Oct2First..$Oct2Last | ForEach-Object {
+            $y = $_
+            $Oct3First..$Oct3Last | ForEach-Object {
+                $t = $_
+                $Oct4First..$Oct4Last | ForEach-Object {
+                    $StartArray[0]+'.'+$y+'.'+$t+'.'+$_
+                }
+            }
+        }
+    }
     # In case of 16 <= CIDR < 24
-    if($StartArray[2] -ne $EndArray[2]){
+    if(($StartArray[0] -eq $EndArray[0]) -and ($StartArray[1] -eq $EndArray[1]) -and ($StartArray[2] -ne $EndArray[2])){
         if($Oct4First -eq 0){
             $Oct4First++
         }
@@ -814,7 +831,9 @@ $syncHash.scan_scriptblock = {
                 $StartArray[0]+'.'+$StartArray[1]+'.'+$t+'.'+$_
             }
         }
-    } elseif(($StartArray[2] -eq $EndArray[2]) -and ($StartArray[3] -ne $EndArray[3])){ # In case of CIDR >= 24
+    }
+    # In case of CIDR >= 24
+    if(($StartArray[0] -eq $EndArray[0]) -and ($StartArray[1] -eq $EndArray[1]) -and ($StartArray[2] -eq $EndArray[2]) -and ($StartArray[3] -ne $EndArray[3])){ 
         if($Oct4First -eq 0){
             $Oct4First++
         }
@@ -824,6 +843,11 @@ $syncHash.scan_scriptblock = {
         }
 
         $IPAddresses = $Oct4First..$Oct4Last | ForEach-Object {$StartArray[0]+'.'+$StartArray[1]+'.'+$StartArray[2]+'.'+$_}
+    }
+
+    # in case there is only 1 IP
+    if(($IPAddresses.GetType().name) -eq "String"){
+        $IPAddresses = @($IPAddresses)
     }
 
     $msg = "IP"
@@ -957,7 +981,15 @@ $syncHash.scan_scriptblock = {
 
     # total alive nodes
     if($arp){
-        $total = $Hosts.Count
+        if($Hosts){
+            if(($Hosts.GetType().name) -eq "PSCustomObject"){ # in case of there is only 1 IP
+                $total = 1
+            } else { # in case of there are more than 1 IP
+                $total = $Hosts.Count
+            }
+        } else { # in case there is no IP
+            $total = 0
+        }
     } else {
         $total = ($Oct4Last - $Oct4First + 1) * ($Oct3Last - $Oct3First + 1)
     }
@@ -1066,8 +1098,8 @@ $syncHash.GUI.BTN_Scan.Add_Click({
             return
         }
 
-        if(!($syncHash.Gui.TB_NetMask.text.SubString(0,8) -eq '255.255.')){
-            $msg = "IP range too large to handle. [CIDR >= 16] or [Subnet Mask >= 255.255.0.0]"
+        if(!($syncHash.Gui.TB_NetMask.text.SubString(0,4) -eq '255.')){
+            $msg = "IP range too large to handle. [CIDR >= 8] or [Subnet Mask >= 255.0.0.0]"
             Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text $msg -NewLine $true
             return
         }
@@ -1092,8 +1124,8 @@ $syncHash.GUI.BTN_Scan.Add_Click({
             return
         }
         $cidr = $syncHash.GUI.TB_CIDR.text -as [int]
-        if($cidr -lt 16 -or $cidr -gt 31){
-            $msg = "IP range too large to handle. [CIDR >= 16] or [Subnet Mask >= 255.255.0.0]"
+        if($cidr -lt 8 -or $cidr -gt 31){
+            $msg = "IP range too large to handle. [CIDR >= 8] or [Subnet Mask >= 255.0.0.0]"
             Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text $msg -NewLine $true
             return
         }
@@ -1214,7 +1246,7 @@ $syncHash.Gui.BTN_About.add_click({
     }
 })
 
-# Set IPAddress focused when app starts
+# Set IPAddress focused when script starts
 $syncHash.Gui.TB_IPAddress.Template.FindName("PART_EditableTextBox", $syncHash.Gui.TB_IPAddress)
 
 # Entering main message loop
