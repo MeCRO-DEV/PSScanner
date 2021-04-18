@@ -991,7 +991,7 @@ $syncHash.scan_scriptblock = {
             $total = 0
         }
     } else {
-        $total = ($Oct4Last - $Oct4First + 1) * ($Oct3Last - $Oct3First + 1)
+        $total = ($Oct4Last - $Oct4First + 1) * ($Oct3Last - $Oct3First + 1) * ($Oct2Last - $Oct2First + 1)
     }
 
     $msg = "Total "
