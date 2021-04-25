@@ -392,7 +392,7 @@ $handler_keypress = {
         $syncHash.Gui.rtb_Output.Document.Blocks.Clear()
     }
 }
-$syncHash.Gui.RTB_Output.add_KeyDown($handler_keypress)
+$syncHash.Window.add_KeyDown($handler_keypress)
 
 # Show output in UI thread
 function Show-Result {
@@ -1188,18 +1188,18 @@ $syncHash.Gui.BTN_About.add_click({
     [int]$i = 0
     [bool]$nl = $false
 
-    for($i=0;$i -lt 11; $i++){
-        if($i -eq 10) {$nl = $true} else {$nl = $false}
-        Show-Result -Font "Courier New" -Size "30" -Color "Yellow" -Text "$emoji_box_h" -NewLine $nl
-    }
+    $syncHash.Gui.rtb_Output.Document.Blocks.Clear() # Clear output window
 
-    Show-Result -Font "Courier New" -Size "30" -Color "Cyan" -Text "PSScanner" -NewLine $true
+    $Image64 = "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"
+    $Image = [System.Convert]::FromBase64String($Image64)
+    [System.Windows.Forms.Clipboard]::SetImage($Image)
     
 
-    for($i=0;$i -lt 11; $i++){
-        if($i -eq 10) {$nl = $true} else {$nl = $false}
-        Show-Result -Font "Courier New" -Size "30" -Color "Yellow" -Text "$emoji_box_h" -NewLine $nl
-    }
+    Show-Result -Font "Courier New" -Size "10" -Color "Yellow" -Text "     " -NewLine $true
+    Show-Result -Font "Courier New" -Size "10" -Color "Yellow" -Text "     " -NewLine $true
+
+    $syncHash.Gui.RTB_Output.ScrollToEnd()
+    $syncHash.Gui.RTB_Output.Paste()
 
     Show-Result -Font "Courier New" -Size "20" -Color "Lime" -Text "$copyright David Wang, 2021 - V1.0" -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
@@ -1210,13 +1210,13 @@ $syncHash.Gui.BTN_About.add_click({
     Show-Result -Font "Courier New" -Size "18" -Color "Pink" -Text "Elevated domain admin" -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "ESC" -NewLine $false
-    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text " to clear output when focused" -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text " to clear output window" -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "Chartreuse" -Text "  Auto-save sorted result to C:\PSScanner" -NewLine $true
 
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
 
-    for($i=0;$i -lt 66; $i++){
-        if($i -eq 65) {$nl = $true} else {$nl = $false}
+    for($i=0;$i -lt 65; $i++){
+        if($i -eq 64) {$nl = $true} else {$nl = $false}
         if($i % 2 -eq 0) {$color = "Lime"} else {$color = "Red"}
         Show-Result -Font "Courier New" -Size "30" -Color $color -Text "$emoji_box_h" -NewLine $nl
     }
@@ -1239,8 +1239,8 @@ $syncHash.Gui.BTN_About.add_click({
     Show-Result -Font "Courier New" -Size "16" -Color "Yellow" -Text 'WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE' -NewLine $true
     Show-Result -Font "Courier New" -Size "16" -Color "Yellow" -Text 'SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.' -NewLine $true
 
-    for($i=0;$i -lt 66; $i++){
-        if($i -eq 65) {$nl = $true} else {$nl = $false}
+    for($i=0;$i -lt 65; $i++){
+        if($i -eq 64) {$nl = $true} else {$nl = $false}
         if($i % 2 -eq 0) {$color = "Lime"} else {$color = "Red"}
         Show-Result -Font "Courier New" -Size "30" -Color $color -Text "$emoji_box_h" -NewLine $nl
     }
