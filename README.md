@@ -1,4 +1,4 @@
-# PSScanner
+![psscanner](https://user-images.githubusercontent.com/57880343/115976871-26e85500-a527-11eb-82e4-b7d1b768056e.png)
 
 PSScanner is made for IT administrators to scan corporate network, showing IP address, hostname, current logon user and serial number for all connected computers.
 It is a WPF application written in Powershell.
