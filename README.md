@@ -43,5 +43,6 @@ PSScanner.ps1  : Requires Windows Powershell 5.0 up with PSParallel module insta
 Contributions : Pull requests and/or suggestions are more than welcome.
 
 Screenshot:
-![image](https://user-images.githubusercontent.com/57880343/114135249-d41f6400-98bd-11eb-90d7-89b1da6fb461.png)
+![Capture](https://user-images.githubusercontent.com/57880343/115994583-8462bd00-a58c-11eb-9e1d-708a660ccb30.PNG)
+
 Due to scanning WAN IP, this screenshot only shows IP address.
