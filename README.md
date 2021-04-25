@@ -32,8 +32,8 @@ Usage:
 6) ARP Ping delay [0-9ms]: Delay(ms) between 2 arp probes. I use UDP request for this type of probing. Default value is 2.
 7) Clear ARP cache before scanning: For the most accurate result, please clear the cache so you woudn't get any disconnected nodes and won't miss any new nodes, because it only scans the IPs in the arp cache.
 8) Output will be saved to c:\PSScanner once the scanning process completed.
-9) To clear the output window, click anywhere on the black area and press ESC key, or it will be automatically cleared when you press SCAN button again.
-10) Even though it can scan IPv4 class A,B,C addresses, this tool is tageted on only corperate LAN, rather than WAN.
+9) To clear the output window, just press ESC key, or it will be automatically cleared when you press SCAN button again.
+10) Even though it can scan IPv4 class A,B,C addresses, this tool is tageted on only corperate LAN, rather than WAN. Scanning /8 network will take long time.
 11) To get the best result, it requires an elevated domain admin account to run.
 
 Files:
