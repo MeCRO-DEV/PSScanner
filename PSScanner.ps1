@@ -2,8 +2,7 @@
 # PSScanner
 # ---------
 # Author: David Wang, Apr 2021 -V1.0
-# Dependency: PSParallel (By Staffan Gustafsson)
-# https://github.com/powercode/PSParallel
+# https://github.com/MeCRO-DEV/PSScanner
 #
 ##########################################################
 # The MIT License (MIT)
@@ -24,7 +23,14 @@
 # IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.#>
-##########################################################
+###############################################################################################################
+# Dependency: PSParallel (By Staffan Gustafsson)
+# https://github.com/powercode/PSParallel
+# The MIT License (MIT)
+# 
+# Copyright (c) 2015, Staffan Gustafsson
+# 
+###############################################################################################################
 #Requires -Version 5.0
 [xml]$Global:xaml = {
     <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -909,7 +915,7 @@ $syncHash.scan_scriptblock = {
             $mac = $_.MACAddress
         } else {
             $ip = $_
-            $test = [bool](Test-Connection -BufferSize 32 -Count 3 -ComputerName $ip -ErrorAction SilentlyContinue)
+            $test = [bool](Test-Connection -BufferSize 32 -Count 3 -ComputerName $ip -Quiet -ErrorAction SilentlyContinue)
         }
 
         if($test){ # for arp, all nodes are alive. for ICMP, Test-Connection return value will tell you if it is alive
@@ -1011,7 +1017,7 @@ $syncHash.scan_scriptblock = {
     $m = ($currenttime.minutes).ToString()
     $s = ($currenttime.seconds).ToString()
     $t = ($currenttime.Milliseconds).ToString()
-    $msg = $d + ":" + $h + ":" + $m + ":" + $s + ":" + $t
+    $msg = $d + ":" + $h + ":" + $m + ":" + $s + "." + $t
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
 
     $msg = "],  Total "
@@ -1206,6 +1212,11 @@ $syncHash.Gui.BTN_About.add_click({
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "Required module: PSParallel" -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "LightGreen" -Text " (By Staffan Gustafsson)" -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "LightBlue" -Text " https://github.com/powercode/PSParallel" -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "Minimum Powershell Version : " -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text "5.0" -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text " | Current Powershell Version : " -NewLine $false
+    $ver = $PSVersionTable.PSVersion.ToString()
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $ver -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "Required account type: " -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "Pink" -Text "Elevated domain admin" -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
