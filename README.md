@@ -55,3 +55,7 @@ Due to scanning WAN IP, this screenshot only shows IP address.
 Sorted output file:
 
 ![sorted](https://user-images.githubusercontent.com/57880343/115995150-ede3cb00-a58e-11eb-97ac-6bcc9e8552ce.PNG)
+
+Powershell multi-threading perfoemance comparision:
+
+PSParallel seems faster than ForEach-Object -Parallel. I have scanned a /16 network using both methods, PSparallel used 1:10:28.575 while ForEach-Object used 1:18:33.939. It's about 8 minutes difference.
