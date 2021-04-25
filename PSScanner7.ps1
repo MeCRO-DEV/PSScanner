@@ -237,8 +237,13 @@ $syncHash.Q = New-Object System.Collections.Concurrent.ConcurrentQueue[psobject]
 # Control variable to trigger updating UI
 [bool]$syncHash.ScanCompleted = $false
 
-# Live Node counter, Thread-safe
-[int]$syncHash.Count = 0
+# Live Node counter, mutex protected
+[int]$syncHash.Count = 0 # Microsoft claimed that synchronized hash table is thread safe, but it's not. I have to use mutex to protect it.
+
+# Global mutex for accessing shared resources in threads
+$Global:createdNew = $False # Stores Boolean value if the current PowerShell Process gets a lock on the Mutex
+# Create the Mutex Object usin the constructuor -> Mutex Constructor (Boolean, String, Boolean)
+$syncHash.mutex = New-Object -TypeName System.Threading.Mutex($false, "Tom", [ref]$Global:createdNew)
 
 # check if there is any thread still running
 Function isThreadRunning {
@@ -262,6 +267,11 @@ $syncHash.Window.add_closing({
         [Windows.MessageBox]::Show(' Worker thread(s) running, please wait...',' Oops!','Ok','Error')
         $_.Cancel = $true
         return
+    }
+    # Cleanup mutex
+    if($syncHash.mutex){
+        $syncHash.mutex.Close()
+        $syncHash.mutex.Dispose()
     }
     # Stop the timers
     if($syncHash.timer_terminal){
@@ -772,7 +782,9 @@ $syncHash.scan_scriptblock = {
 
     [System.Diagnostics.Stopwatch]$Time = [System.Diagnostics.Stopwatch]::StartNew()
 
+    $syncHash.mutex.WaitOne()
     $syncHash.Count = 0
+    $syncHash.mutex.ReleaseMutex()
 
     # Calculate IP address set based on IP range
     # In case of 8 <= CIDR < 16
@@ -896,7 +908,9 @@ $syncHash.scan_scriptblock = {
         }
 
         if($test){ # for arp, all nodes are alive. for ICMP, Test-Connection return value will tell you if it is alive
+            $sync.mutex.WaitOne()
             $sync.Count = $sync.Count + 1
+            $sync.mutex.ReleaseMutex()
 
             $hsEntry = [System.Net.Dns]::GetHostEntry($ip)  # reverse DNS lookup
                 
@@ -998,7 +1012,9 @@ $syncHash.scan_scriptblock = {
     $msg = "],  Total "
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
 
+    $syncHash.mutex.WaitOne()
     $msg = ($syncHash.Count).ToString()
+    $syncHash.mutex.ReleaseMutex()
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Magenta",$msg,$false
 
     $msg = " node(s) alive."
@@ -1009,7 +1025,9 @@ $syncHash.scan_scriptblock = {
 
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
     
+    $syncHash.mutex.WaitOne()
     $syncHash.Count = 0
+    $syncHash.mutex.ReleaseMutex()
 
     $Time.Stop()
     Remove-Variable -Name "Time"
