@@ -40,6 +40,8 @@ Files:
 
 PSScanner.ps1  : Requires Windows Powershell 5.0 up with PSParallel module installed
 
+PSScanner7.ps1  : Requires Powershell Core 7.0 up, no dependent module required
+
 Contributions : Pull requests and/or suggestions are more than welcome.
 
 Screenshot:
