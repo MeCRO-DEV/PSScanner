@@ -655,10 +655,9 @@ function CheckSubnetMask ($SubnetMask)
 	
 	if ($IsValid)
 	{
-		[reflection.assembly]::LoadWithPartialName("'Microsoft.VisualBasic") | Out-Null
 		foreach ($item in $MaskParts)
 		{
-			if (!([Microsoft.VisualBasic.Information]::isnumeric($item))) {$IsValid = $false}
+			if (!($item -match "^[\d\.]+$")) {$IsValid = $false}
 		}
 	}
 	
@@ -678,9 +677,7 @@ function CheckSubnetMask ($SubnetMask)
 			$binary = [Convert]::ToString($item,2)
 			if ($binary.length -lt 8)
 			{
-				do {
-				$binary = "0$binary"
-				} while ($binary.length -lt 8)
+				$binary = $binary.PadLeft(8,'0')
 			}
 			$strFullBinary = $strFullBinary+$binary
 		}
