@@ -1,39 +1,3 @@
-﻿<#PSScriptInfo
-
-.VERSION 1.0
-
-.GUID 0e892185-8331-48bb-9604-1b179cae262e
-
-.AUTHOR David Wang
-
-.COMPANYNAME MeCRO Consulting Inc.
-
-.COPYRIGHT David Wang 2021
-
-.TAGS Powershell Multi-threading Runspacepool network-scanning
-
-.LICENSEURI https://github.com/MeCRO-DEV/PSScanner/blob/main/LICENSE
-
-.PROJECTURI https://github.com/MeCRO-DEV/PSScanner
-
-.ICONURI
-
-.EXTERNALMODULEDEPENDENCIES PSParallel
-
-.REQUIREDSCRIPTS
-
-.EXTERNALSCRIPTDEPENDENCIES
-
-.RELEASENOTES PSScanner.ps1(depends on PSParallel/PS5), PSScanner7.ps1 (depends on PS7)
-
-#>
-
-<#
-
-.DESCRIPTION
-PSScanner is made for IT administrators to scan corporate network, showing IP address, hostname, current logon user and serialnumber for all connected computers. It is a WPF application written in Powershell; it depents on PSParallel module for multi-threaded scan. 
-
-#>
 ##########################################################
 # PSScanner
 # ---------
