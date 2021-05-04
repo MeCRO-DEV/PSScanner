@@ -468,7 +468,7 @@ $syncHash.OutputResult = {
                 $fStream = [System.IO.FileStream]::New($path, [System.IO.FileMode]::Create)
                 $range.Save($fStream, [System.Windows.DataFormats]::Text)
                 $fStream.Close()
-                New-Event -SourceIdentifier Process_Result -MessageData $path
+                New-Event -SourceIdentifier Process_Result -MessageData @($path, $syncHash)
             }
         }
     }
@@ -548,7 +548,7 @@ $syncHash.Window.Add_SourceInitialized({
 
 # Setup event handler to sort the output file
 $syncHash.PostPocess = {
-    [string]$path = $event.messagedata
+    [string]$path = $event.messagedata[0]
     $o = [System.Collections.ArrayList]@() # Original
     $h = [System.Collections.ArrayList]@() # header
     $f = [System.Collections.ArrayList]@() # Footer
@@ -626,6 +626,16 @@ $syncHash.PostPocess = {
     $o | Out-File $path
 
     Rename-Item -Path $path -NewName $path.Replace("output", "Sorted") -Force
+
+    $objHash = @{
+        font    = "Courier New"
+        size    = "20"
+        color   = "Lime"
+        msg     = "Done"
+        newline = $true
+    }
+    
+    $event.MessageData[1].Q.Enqueue($objHash)
 }
 
 $null = Register-EngineEvent -SourceIdentifier Process_Result -Action $syncHash.PostPocess
@@ -1028,6 +1038,10 @@ $syncHash.scan_scriptblock = {
 
     $Time.Stop()
     Remove-Variable -Name "Time"
+
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Cyan","Saving data, please ",$false
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Yellow","DO NOT",$false
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Cyan"," close the application until finished ... ",$false
     
     $syncHash.ScanCompleted = $true
 }
