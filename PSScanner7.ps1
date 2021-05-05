@@ -234,9 +234,6 @@ $syncHash.Jobs = [System.Collections.ArrayList]@()
 # Concurrent Q for output
 $syncHash.Q = New-Object System.Collections.Concurrent.ConcurrentQueue[psobject]
 
-# Control variable to trigger updating UI
-[bool]$syncHash.ScanCompleted = $false
-
 # Live Node counter, mutex protected
 [int]$syncHash.Count = 0 # Microsoft claimed that synchronized hash table is thread safe, but it's not. I have to use mutex to protect it.
 
@@ -276,9 +273,6 @@ $syncHash.Window.add_closing({
     # Stop the timers
     if($syncHash.timer_terminal){
         $syncHash.timer_terminal.Stop()
-    }
-    if($syncHash.timer){
-        $syncHash.timer.Stop()
     }
 
     Unregister-Event -SourceIdentifier Process_Result -Force
@@ -503,49 +497,6 @@ $syncHash.Window.Add_SourceInitialized({
     $syncHash.timer_terminal.Start()
 })
 
-# Update UI
-$syncHash.updateUI = {
-    if($syncHash.ScanCompleted){
-        $syncHash.ScanCompleted = $false
-
-        if($syncHash.Gui.RB_CIDR.isChecked){
-            $syncHash.Gui.TB_CIDR.IsEnabled      = $true
-            $syncHash.Gui.TB_NetMask.IsEnabled   = $false
-        } else {
-            $syncHash.Gui.TB_CIDR.IsEnabled      = $false
-            $syncHash.Gui.TB_NetMask.IsEnabled   = $true
-        }
-        $syncHash.Gui.TB_IPAddress.IsEnabled = $true
-        $syncHash.Gui.TB_Threshold.IsEnabled = $true
-        $syncHash.Gui.RB_Mask.IsEnabled      = $true
-        $syncHash.Gui.RB_CIDR.IsEnabled      = $true
-        $syncHash.Gui.CB_More.IsEnabled      = $true
-        $syncHash.Gui.CB_ARP.IsEnabled       = $true
-        $syncHash.Gui.BTN_Scan.IsEnabled     = $true
-        $syncHash.Gui.BTN_About.IsEnabled    = $true
-        $syncHash.Gui.BTN_Exit.IsEnabled     = $true
-        if($syncHash.Gui.CB_ARP.isChecked){
-            $syncHash.Gui.TB_Delay.IsEnabled = $true
-            $syncHash.Gui.CB_CC.IsEnabled    = $true
-        } else {
-            $syncHash.Gui.TB_Delay.IsEnabled = $false
-            $syncHash.Gui.CB_CC.IsEnabled    = $false
-        }
-
-        if(!(isThreadRunning)){ $syncHash.Gui.PB.IsIndeterminate = $false } # stop progressbar animation
-    }
-}
-
-#Timer for updating the GUI
-$syncHash.timer = new-object System.Windows.Threading.DispatcherTimer
-
-# Setup timer and callback for updating GUI
-$syncHash.Window.Add_SourceInitialized({            
-    $syncHash.timer.Interval = [TimeSpan]"0:0:5.00" # 5 seconds delay
-    $syncHash.timer.Add_Tick( $syncHash.updateUI )
-    $syncHash.timer.Start()
-})
-
 # Setup event handler to sort the output file
 $syncHash.PostPocess = {
     [string]$path = $event.messagedata[0]
@@ -631,11 +582,37 @@ $syncHash.PostPocess = {
         font    = "Courier New"
         size    = "20"
         color   = "Lime"
-        msg     = "Done"
+        msg     = "[ Done ]"
         newline = $true
     }
-    
-    $event.MessageData[1].Q.Enqueue($objHash)
+    $event.messagedata[1].Q.Enqueue($objHash)
+    Remove-Variable -Name "objHash"
+
+    # Update UI, enable all widgets
+    if($event.messagedata[1].Gui.RB_CIDR.isChecked){
+        $event.messagedata[1].Gui.TB_CIDR.IsEnabled      = $true
+        $event.messagedata[1].Gui.TB_NetMask.IsEnabled   = $false
+    } else {
+        $event.messagedata[1].Gui.TB_CIDR.IsEnabled      = $false
+        $event.messagedata[1].Gui.TB_NetMask.IsEnabled   = $true
+    }
+    $event.messagedata[1].Gui.TB_IPAddress.IsEnabled = $true
+    $event.messagedata[1].Gui.TB_Threshold.IsEnabled = $true
+    $event.messagedata[1].Gui.RB_Mask.IsEnabled      = $true
+    $event.messagedata[1].Gui.RB_CIDR.IsEnabled      = $true
+    $event.messagedata[1].Gui.CB_More.IsEnabled      = $true
+    $event.messagedata[1].Gui.CB_ARP.IsEnabled       = $true
+    $event.messagedata[1].Gui.BTN_Scan.IsEnabled     = $true
+    $event.messagedata[1].Gui.BTN_About.IsEnabled    = $true
+    $event.messagedata[1].Gui.BTN_Exit.IsEnabled     = $true
+    if($event.messagedata[1].Gui.CB_ARP.isChecked){
+        $event.messagedata[1].Gui.TB_Delay.IsEnabled = $true
+        $event.messagedata[1].Gui.CB_CC.IsEnabled    = $true
+    } else {
+        $event.messagedata[1].Gui.TB_Delay.IsEnabled = $false
+        $event.messagedata[1].Gui.CB_CC.IsEnabled    = $false
+    }
+    $event.messagedata[1].Gui.PB.IsIndeterminate = $false
 }
 
 $null = Register-EngineEvent -SourceIdentifier Process_Result -Action $syncHash.PostPocess
@@ -768,7 +745,7 @@ $syncHash.scan_scriptblock = {
         [bool]$ARP_Clear, # Clear ARP Cache before scanning
         [int]$DelayMS     # Delay for arp ping
     )
-
+    
     $StartArray = $start.Split('.')
     $EndArray = $end.Split('.')
 
@@ -780,15 +757,8 @@ $syncHash.scan_scriptblock = {
     [int]$Oct4Last  = $EndArray[3]   -as [int]
     [string]$msg    = ""
 
-    if($StartArray[0] -ne $EndArray[0]){
-        $msg = "IP range too large to handle. [CIDR >= 8] or [Subnet Mask >= 255.0.0.0]"
-        Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
-        $syncHash.ScanCompleted = $true
-        return
-    }
-
     [System.Diagnostics.Stopwatch]$Time = [System.Diagnostics.Stopwatch]::StartNew()
-
+    
     $syncHash.mutex.WaitOne()
     $syncHash.Count = 0
     $syncHash.mutex.ReleaseMutex()
@@ -848,7 +818,7 @@ $syncHash.scan_scriptblock = {
     if(($IPAddresses.GetType().name) -eq "String"){
         $IPAddresses = @($IPAddresses)
     }
-
+    
     $msg = "IP"
     $msg = $msg.PadRight(17,' ') + "Hostname"
 
@@ -860,7 +830,7 @@ $syncHash.scan_scriptblock = {
         if($arp) { $msg = $msg.PadRight(64,' ') + "MAC-Address" }
     }
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Yellow",$msg,$true
-
+    
     if($arp){
         if($ARP_Clear) {
             arp -d # Clear ARP cache
@@ -892,7 +862,7 @@ $syncHash.scan_scriptblock = {
     } else {
         $ips = $IPAddresses # for ICMP scan, we test all IPs
     }
-
+    
     # Forking worker threads using ForEach-Object -Parallel
     $ips | ForEach-Object -ThrottleLimit $threshold -Parallel { # test/query worker threads
         [bool]$test  = $false
@@ -1039,11 +1009,9 @@ $syncHash.scan_scriptblock = {
     $Time.Stop()
     Remove-Variable -Name "Time"
 
-    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Cyan","Saving data, please ",$false
-    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Yellow","DO NOT",$false
-    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Cyan"," close the application until finished ... ",$false
-    
-    $syncHash.ScanCompleted = $true
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Cyan","Saving to file, please ",$false
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Yellow","DO NOT ",$false
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Cyan","close this app until it's finished ... ",$false
 }
 
 # Handle Scan Button click event
