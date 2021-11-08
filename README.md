@@ -59,3 +59,6 @@ Sorted output file:
 Powershell multi-threading performance comparision:
 
 PSParallel seems faster than ForEach-Object -Parallel. I have scanned a /16 network using both methods, PSparallel used 1:10:28.575 while ForEach-Object used 1:18:33.939. It's about 8 minutes difference.
+
+---------------
+![](https://komarev.com/ghpvc/?username=MeCRO-DEV&color=green)
