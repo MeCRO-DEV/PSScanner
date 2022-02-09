@@ -62,4 +62,4 @@ PSParallel seems faster than ForEach-Object -Parallel. I have scanned a /16 netw
 
 ---------------
 ![](https://komarev.com/ghpvc/?username=MeCRO-DEV&color=green)
-![](http://mecro.net/count.php)
+![](http://mecro.net/psscanner.php)
