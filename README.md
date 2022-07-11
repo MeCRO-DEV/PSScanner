@@ -15,7 +15,7 @@ Arp clear cache: Local admin right required.
 
 Port scan/sweep
 
-Intergrated PS7+ native multi-threading with ForEach-Object -Parallel (-ps7 switch will turn it on. PSScanner7.ps1 is obsolete
+Intergrated PS7+ native multi-threading with ForEach-Object -Parallel (-ps7 switch will turn it on. PSScanner7.ps1 is obsolete)
 
 This project can be a template for any Powershell/WPF application development.
 
