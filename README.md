@@ -30,7 +30,7 @@ Usage:
 
 1) IP Address: Any IP in the target subnet (IPv4 Class A,B,C)
 2) Subnet mask or CIDR of your choice. CIDR default to 24.(IPv4 Class A,B,C)
-3) Runspace capacity: [1-128]. To control the degree of parallelism, i.e. the number of concurrent runspaces, use the -ThrottleLimit parameter as I call it Runspacepool capacity. Default value is 32.
+3) Runspace capacity: [1-128]. To control the degree of parallelism, i.e. the number of concurrent runspaces, use the -ThrottleLimit parameter as I call it Runspacepool capacity. Default value is 128.
 4) Check "More" to show current logon user and serial number on each live node.
 5) Check ARP to use ARP scan. This is limited to the local network as ARP is a layer-2 protocol. ARP-Scanning a network which differs from the one your computer is on will be resulting zero nodes alive. ARP scan will exclude the IP of your own computer on which this script is running.
 6) ARP Ping delay [0-9ms]: Delay(ms) between 2 arp probes. I use UDP request for this type of probing. Default value is 2.
