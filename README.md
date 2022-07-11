@@ -11,6 +11,7 @@ It is a WPF application written in Powershell.
 ✔ Port scan/sweep
 ✔ Intergrated PS7+ native multi-threading with ForEach-Object -Parallel (-ps7 switch will turn it on. PSScanner7.ps1 is obsolete)
 
+
 This project can be a template for any Powershell/WPF application development.
 
 1) RunspacePool management
