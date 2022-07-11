@@ -42,7 +42,7 @@ Usage:
 
 Files:
 
-PSScanner.ps1  : Requires Windows Powershell 5.0 up with PSParallel module installed. If you want to use native multi-threading mode, you need Powershell Core 7+
+PSScanner.ps1  : Requires Windows Powershell 5.0 up with PSParallel module installed. If you don't want to install PSParallel module and just want to use native multi-threading mode, you need Powershell Core 7+. Native mode has less performance on multi-threading.
 
 PSScanner7.ps1  : Requires Powershell Core 7.0 up, no dependent module required (Obsolete, please use PSScanner.ps1 with -ps7 switch)
 
