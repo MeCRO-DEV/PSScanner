@@ -3,19 +3,13 @@
 PSScanner is made for IT administrators to scan corporate network, showing IP address, hostname, current logon user and serial number for all connected computers. Initially it was made for comparing Powershell multi-threading performance, but it can be used as a great pen-testing tool whenever installing 3rd-party software is immpossible.
 It is a WPF application written in Powershell.
 
-Featuring ICMP/ARP scan and TCP port scan/sweep, PSScanner can scan the whole subnet in a fast speed.
-
-Logon user query method: Windows query command
-
-Host name query method: Reverse DNS resolution
-
-Serial number query: WMI remote query. RPC needs to be running on each target otherwise the result will be "...". Domain admin right required.
-
-Arp clear cache: Local admin right required.
-
-Port scan/sweep
-
-Intergrated PS7+ native multi-threading with ForEach-Object -Parallel (-ps7 switch will turn it on. PSScanner7.ps1 is obsolete)
+✔ Featuring ICMP/ARP scan and TCP port scan/sweep, PSScanner can scan the whole subnet in a fast speed.
+✔ Logon user query method: Windows query command
+✔ Host name query method: Reverse DNS resolution
+✔ Serial number query: WMI remote query. RPC needs to be running on each target otherwise the result will be "...". Domain admin right required.
+✔ Arp clear cache: Local admin right required.
+✔ Port scan/sweep
+✔ Intergrated PS7+ native multi-threading with ForEach-Object -Parallel (-ps7 switch will turn it on. PSScanner7.ps1 is obsolete)
 
 This project can be a template for any Powershell/WPF application development.
 
