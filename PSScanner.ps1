@@ -1,13 +1,16 @@
 ﻿##########################################################
 # PSScanner
 # ---------
-# Author: David Wang, Apr 2021 -V1.0
+# Author: David Wang, Jul 2022 V2.0
 # https://github.com/MeCRO-DEV/PSScanner
+# Usage: PSScanner.ps1 [-ps7]
+#        Switch -ps7 indicating you are using Powershell core 7+ and you want to use 
+#        the native Foreach-Object -Parallel. In this case, there is no dependeny needed
 #
 ##########################################################
 # The MIT License (MIT)
 #
-# Copyright (c) 2021, David Wang
+# Copyright (c) 2022, David Wang
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and 
 # associated documentation files (the "Software"), to deal in the Software without restriction, 
@@ -22,7 +25,7 @@
 # LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 # IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
-# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.#>
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ###############################################################################################################
 # Dependency: PSParallel (By Staffan Gustafsson)
 # https://github.com/powercode/PSParallel
@@ -32,7 +35,14 @@
 # 
 ###############################################################################################################
 #Requires -Version 5.0
-Param()
+
+param(
+    [Parameter()]
+    [switch]$ps7 = $false
+)
+
+Set-StrictMode -Version Latest
+
 [xml]$Global:xaml = {
     <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -112,67 +122,115 @@ Param()
             </Style>
         </Window.Resources>
         <Grid Background="DarkCyan" HorizontalAlignment="Left" Width="1024">
-            <TextBox x:Name="TB_IPAddress" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="4,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center" ToolTip="Any IP in the target subnet"/>
-            <TextBlock IsHitTestVisible="False" Text="IP Address" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="12,10,0,0" Foreground="DarkGray">
-                <TextBlock.Style>
-                    <Style TargetType="{x:Type TextBlock}">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Text, ElementName=TB_IPAddress}" Value="">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
-            <TextBox x:Name="TB_NetMask" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="206,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center" ToolTip="Minimum [255.0.0.0]"/>
-            <TextBlock IsHitTestVisible="False" Text="Subnet Mask" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" Foreground="DarkGray">
-                <TextBlock.Style>
-                    <Style TargetType="{x:Type TextBlock}">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Text, ElementName=TB_NetMask}" Value="">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
-            <TextBox x:Name="TB_CIDR" Text="24" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="408,4,0,0" VerticalAlignment="Top" Width="50" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="2" Background="LightYellow" TextAlignment="Center" ToolTip="CIDR [8-31]"/>
-            <TextBlock IsHitTestVisible="False" Text="CIDR" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="412,10,0,0" Foreground="DarkGray">
-                <TextBlock.Style>
-                    <Style TargetType="{x:Type TextBlock}">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Text, ElementName=TB_CIDR}" Value="">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
-            <TextBox x:Name="TB_Threshold" Text="32" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="460,4,0,0" VerticalAlignment="Top" Width="60" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="3" Background="LightYellow" TextAlignment="Center" ToolTip="Runspacepool capacity [1-128]"/>
-            <TextBlock IsHitTestVisible="False" Text="Threshold" FontFamily="Courier New" FontSize="10" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="462,14,0,0" Foreground="DarkGray">
-                <TextBlock.Style>
-                    <Style TargetType="{x:Type TextBlock}">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Text, ElementName=TB_Threshold}" Value="">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
-            <RadioButton x:Name="RB_Mask" Content="Mask" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="522,10,0,0" VerticalAlignment="Top" Width="70" Foreground="Cyan" ToolTip="Use subnet mask"/>
-            <RadioButton x:Name="RB_CIDR" Content="CIDR" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="594,10,0,0" VerticalAlignment="Top" Width="70" Foreground="Cyan" ToolTip="Use CIDR"/>
-            <CheckBox x:Name="CB_More" Content="More" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="666,10,0,0"  VerticalAlignment="Top" Width="70" Foreground="Lime" ToolTip="Show logon user and serial number"/>
-            <CheckBox x:Name="CB_ARP" Content="ARP" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="738,10,0,0"  VerticalAlignment="Top" Width="70" Foreground="DarkOrange" ToolTip="Use ARP request"/>
-            <TextBox x:Name="TB_Delay" Text="2" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="798,4,0,0" VerticalAlignment="Top" Width="27" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="1" Background="LightYellow" TextAlignment="Center" ToolTip="ARP Ping Delay (0-9ms)"/>
-            <CheckBox x:Name="CB_CC" Content="" FontFamily="Courier New" FontSize="40" HorizontalAlignment="Left" Height="60" Margin="830,10,0,0"  VerticalAlignment="Top" Width="60" Foreground="DarkOrange" ToolTip="Clear ARP cache before scanning"/>
-            <Button x:Name="BTN_Scan" Content="Scan" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="851,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnLime}"/>
-            <Button x:Name="BTN_Exit" Content="Exit" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="913,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnBrown}"/>
-            <Button x:Name="BTN_About" Content="" FontFamily="Courier New" FontSize="15" HorizontalAlignment="Left" Height="30" Margin="975,4,0,0" VerticalAlignment="Top" Width="35" Foreground="Yellow" Style="{StaticResource btnGreen}"/>
+            <Canvas x:Name="cv_ipscan" Background="Gray">
+                <TextBox x:Name="TB_IPAddress" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="4,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center" ToolTip="Any IP in the target subnet"/>
+                <TextBlock IsHitTestVisible="False" Text="IP Address" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="12,10,0,0" Foreground="DarkGray">
+                    <TextBlock.Style>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=TB_IPAddress}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBox x:Name="TB_NetMask" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="206,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center" ToolTip="Minimum [255.0.0.0]"/>
+                <TextBlock IsHitTestVisible="False" Text="Subnet Mask" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" Foreground="DarkGray">
+                    <TextBlock.Style>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=TB_NetMask}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBox x:Name="TB_CIDR" Text="24" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="408,4,0,0" VerticalAlignment="Top" Width="50" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="2" Background="LightYellow" TextAlignment="Center" ToolTip="CIDR [8-31]"/>
+                <TextBlock IsHitTestVisible="False" Text="CIDR" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="412,10,0,0" Foreground="DarkGray">
+                    <TextBlock.Style>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=TB_CIDR}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBox x:Name="TB_Threshold" Text="128" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="460,4,0,0" VerticalAlignment="Top" Width="60" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="3" Background="LightYellow" TextAlignment="Center" ToolTip="Runspacepool capacity [1-128]"/>
+                <TextBlock IsHitTestVisible="False" Text="Threshold" FontFamily="Courier New" FontSize="10" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="462,14,0,0" Foreground="DarkGray">
+                    <TextBlock.Style>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=TB_Threshold}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <RadioButton x:Name="RB_Mask" Content="Mask" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="522,10,0,0" VerticalAlignment="Top" Width="70" Foreground="Cyan" ToolTip="Use subnet mask"/>
+                <RadioButton x:Name="RB_CIDR" Content="CIDR" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="594,10,0,0" VerticalAlignment="Top" Width="70" Foreground="Cyan" ToolTip="Use CIDR"/>
+                <CheckBox x:Name="CB_More" Content="More" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="666,10,0,0"  VerticalAlignment="Top" Width="70" Foreground="Lime" ToolTip="Show logon user and serial number"/>
+                <CheckBox x:Name="CB_ARP" Content="ARP" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="738,10,0,0"  VerticalAlignment="Top" Width="70" Foreground="DarkOrange" ToolTip="Use ARP request"/>
+                <TextBox x:Name="TB_Delay" Text="2" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="798,4,0,0" VerticalAlignment="Top" Width="27" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="1" Background="LightYellow" TextAlignment="Center" ToolTip="ARP Ping Delay (0-9ms)"/>
+                <CheckBox x:Name="CB_CC" Content="" FontFamily="Courier New" FontSize="40" HorizontalAlignment="Left" Height="60" Margin="830,10,0,0"  VerticalAlignment="Top" Width="60" Foreground="DarkOrange" ToolTip="Clear ARP cache before scanning, local admin required."/>
+                <Button x:Name="BTN_Scan" Content="Scan" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="851,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnLime}" ToolTip="Start port scan."/>
+                <Button x:Name="BTN_Exit" Content="Exit" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="913,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnBrown}"/>
+                <Button x:Name="BTN_About" Content="" FontFamily="Courier New" FontSize="15" HorizontalAlignment="Left" Height="30" Margin="975,4,0,0" VerticalAlignment="Top" Width="35" Foreground="Yellow" Style="{StaticResource btnGreen}" ToolTip="Help"/>
+            </Canvas>
+            <Canvas x:Name="cv_portscan" Background="Gray">
+                <TextBox x:Name="TB_SP" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="4,4,0,0" VerticalAlignment="Top" Width="100" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="5" Background="LightYellow" TextAlignment="Center" ToolTip="Starting Port#"/>
+                <TextBlock IsHitTestVisible="False" Text="Start Port" FontFamily="Courier New" FontSize="12" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="16,15,0,0" Foreground="DarkGray">
+                    <TextBlock.Style>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=TB_SP}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBox x:Name="TB_EP" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="104,4,0,0" VerticalAlignment="Top" Width="100" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="5" Background="LightYellow" TextAlignment="Center" ToolTip="Ending Port#"/>
+                <TextBlock IsHitTestVisible="False" Text="End Port" FontFamily="Courier New" FontSize="12" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="126,15,0,0" Foreground="DarkGray">
+                    <TextBlock.Style>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=TB_EP}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <CheckBox x:Name="CB_SOO" Content="Show Open&#10;Ports Only" FontFamily="Courier New" FontSize="11" HorizontalAlignment="Left" Height="24" Margin="208,6,0,0"  VerticalAlignment="Center" Width="86" Foreground="Lime" ToolTip="Show open ports only, no effect with port sweeping and IP scanning."/>
+                <TextBox x:Name="TB_Sweep" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="300,4,0,0" VerticalAlignment="Top" Width="470" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="38" Background="LightYellow" TextAlignment="Left" ToolTip="Ports List, seperated by commas"/>
+                <TextBlock IsHitTestVisible="False" Text="Port sweep list" FontFamily="Courier New" FontSize="20" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="304,8,0,0" Foreground="DarkGray">
+                    <TextBlock.Style>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=TB_Sweep}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <Button x:Name="BTN_Sweep" Content="Sweep" FontFamily="Courier New" FontSize="18" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="772,4,0,0" VerticalAlignment="Top" Width="80" Foreground="Blue" Style="{StaticResource btnLime}" ToolTip="TCP sweeping, it shows open ports only."/>
+                <Button x:Name="BTN_ScanPort" Content="Scan" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="853,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnLime}" ToolTip="Ports scan"/>
+                <Button x:Name="BTN_PsExit" Content="Exit" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="914,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnBrown}"/>
+                <Button x:Name="BTN_PsAbout" Content="" FontFamily="Courier New" FontSize="15" HorizontalAlignment="Left" Height="30" Margin="975,4,0,0" VerticalAlignment="Top" Width="35" Foreground="Yellow" Style="{StaticResource btnGreen}" ToolTip="Help"/>
+            </Canvas>
             <RichTextBox x:Name="RTB_Output" FontFamily="Courier New" FontSize="18" HorizontalAlignment="Left" Height="668" Margin="4,36,0,0" VerticalAlignment="Top" Width="1006" Background="Black" Foreground="LightGreen" IsReadOnly="true" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible" MaxWidth="4096">
                 <FlowDocument  PageWidth="4096">
                     <Paragraph>
@@ -190,14 +248,21 @@ Param()
     </Window>
 }
 
-Set-StrictMode -Version Latest
-
-# Setup dependency for the 1st time
-if (!(Get-Module -ListAvailable -Name PSParallel)) {
-    Install-Module -Name PSParallel -Scope AllUsers -Force -Confirm:$false
+if($ps7.IsPresent){
+    if($PSVersionTable.PSVersion.Major -lt 7){
+        Write-Host -ForegroundColor Red "Native multi-threading requires Powershell Core 7+."
+        Write-Host -ForegroundColor Yellow "Script terminated."
+        exit
+    }
 }
 
-Import-Module PSParallel
+if($PSVersionTable.PSVersion.Major -lt 7){ # In case you are using Windows Powershell, Powershell Core 6 or earlier
+    # Setup dependency for the 1st time
+    if (!(Get-Module -ListAvailable -Name PSParallel)) {
+        Install-Module -Name PSParallel -Scope AllUsers -Force -Confirm:$false
+    }
+    Import-Module PSParallel
+} # Otherwise you are using Powershell Core 7 and later
 
 $emoji_about  = [char]::ConvertFromUtf32(0x02753) # ❓
 $emoji_box_h  = [char]::ConvertFromUtf32(0x02501) # ━
@@ -229,9 +294,20 @@ $syncHash.Gui.RB_Mask.IsChecked = $false
 $syncHash.Gui.TB_NetMask.IsEnabled = $false
 $syncHash.GUI.TB_Delay.IsEnabled = $false
 $syncHash.Gui.BTN_About.Content = "$emoji_about"
+$syncHash.Gui.BTN_PsAbout.Content = "$emoji_about"
 $syncHash.Gui.CB_CC.IsEnabled    = $false
 $syncHash.Gui.CB_CC.IsChecked    = $true
+$syncHash.Gui.CB_SOO.IsChecked    = $true
 $syncHash.Gui.SB.Text = $env:USERDNSDOMAIN + '\' + $env:USERNAME + ' | ' + $env:COMPUTERNAME + ' | ' + $env:NUMBER_OF_PROCESSORS + ' CPU Core(s)'
+
+# Test if you have local admin rignt
+$user = [Security.Principal.WindowsIdentity]::GetCurrent();
+$isAdmin = (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+if($isAdmin){
+    $syncHash.Gui.SB.Foreground = "DarkGreen"
+} else {
+    $syncHash.Gui.SB.Foreground = "DarkBlue"
+}
 
 # create the runspace pool and pass the $syncHash variable through
 $SessionVariable = New-Object 'Management.Automation.Runspaces.SessionStateVariableEntry' -ArgumentList 'syncHash', $syncHash, 'Synchronized hash table'
@@ -250,12 +326,18 @@ $syncHash.Jobs = [System.Collections.ArrayList]@()
 $syncHash.Q = New-Object System.Collections.Concurrent.ConcurrentQueue[psobject]
 
 # Live Node counter, mutex protected
-[int]$syncHash.Count = 0 # Microsoft claimed that synchronized hash table is thread safe, but it's not. I have to use mutex to protect it.
+[int]$syncHash.Count    = 0 # Microsoft claimed that synchronized hash table is thread safe, but it's not. I have to use mutex to protect it.
+[int]$syncHash.opened   = 0 # Number of opened ports
+[int]$syncHash.closed   = 0 # Number of closed ports
+[int]$syncHash.filtered = 0 # Number of filtered ports
 
 # Global mutex for accessing shared resources in threads
 $Global:createdNew = $False # Stores Boolean value if the current PowerShell Process gets a lock on the Mutex
 # Create the Mutex Object usin the constructuor -> Mutex Constructor (Boolean, String, Boolean)
 $syncHash.mutex = New-Object -TypeName System.Threading.Mutex($false, "Tom", [ref]$Global:createdNew)
+
+$syncHash.Gui.cv_ipscan.Visibility = [System.Windows.Visibility]::Visible
+$syncHash.Gui.cv_portscan.Visibility = [System.Windows.Visibility]::Hidden
 
 # check if there is any thread still running
 Function isThreadRunning {
@@ -308,6 +390,9 @@ $syncHash.Window.add_closed({
 
 # Exit button clicked
 $syncHash.GUI.BTN_Exit.Add_Click({
+    $syncHash.Window.close()
+})
+$syncHash.GUI.BTN_PSExit.Add_Click({
     $syncHash.Window.close()
 })
 
@@ -386,11 +471,50 @@ $syncHash.Gui.TB_CIDR.Add_TextChanged({
     }
 })
 
-# When focus is on the output window, press ESC key to clear the output window
+# Start port input validation
+$syncHash.Gui.TB_SP.Add_TextChanged({
+    if ($this.Text -match '[^0-9]') {
+        $cursorPos = $this.SelectionStart
+        $this.Text = $this.Text -replace '[^0-9]',''
+        $this.SelectionStart = $cursorPos - 1
+        $this.SelectionLength = 0
+    }
+})
+
+# End port input validation
+$syncHash.Gui.TB_EP.Add_TextChanged({
+    if ($this.Text -match '[^0-9]') {
+        $cursorPos = $this.SelectionStart
+        $this.Text = $this.Text -replace '[^0-9]',''
+        $this.SelectionStart = $cursorPos - 1
+        $this.SelectionLength = 0
+    }
+})
+
+# Port sweep list input validation
+$syncHash.Gui.TB_Sweep.Add_TextChanged({
+    if ($this.Text -match '[^0-9,]') {
+        $cursorPos = $this.SelectionStart
+        $this.Text = $this.Text -replace '[^0-9,]',''
+        $this.SelectionStart = $cursorPos - 1
+        $this.SelectionLength = 0
+    }
+})
+
+# Hot key events handling
 $handler_keypress = {
     [string]$key = ($_.key).ToString()
-    if($key -match "Escape"){
+    if($key -match "Escape"){ # ESC to clear output window
         $syncHash.Gui.rtb_Output.Document.Blocks.Clear()
+    }
+    if($key -match "F1"){ # F1 to switch between IP scan and port scan/sweep
+        if($syncHash.Gui.cv_ipscan.Visibility -eq [System.Windows.Visibility]::Visible){
+            $syncHash.Gui.cv_ipscan.Visibility = [System.Windows.Visibility]::Hidden
+            $syncHash.Gui.cv_portscan.Visibility = [System.Windows.Visibility]::Visible
+        }else{
+            $syncHash.Gui.cv_ipscan.Visibility = [System.Windows.Visibility]::Visible
+            $syncHash.Gui.cv_portscan.Visibility = [System.Windows.Visibility]::Hidden
+        }
     }
 }
 $syncHash.Window.add_KeyDown($handler_keypress)
@@ -467,7 +591,7 @@ $syncHash.OutputResult = {
 
         if($ok){ # There is something ready to display
             Show-Result -Font $objHash.font -Size $objHash.size -Color $objHash.color -Text $objHash.msg -NewLine $objHash.newline
-            if($objHash.msg -match "completed"){ # When completed, save the result to a file located in c:\PSScanner
+            if($objHash.msg -match "completed"){ # When IP scanning completed, save the result to a file located in c:\PSScanner
                 if(!(Test-Path -Path "C:\PSScanner")) {
                     New-Item -Path "C:\PSScanner" -type directory -Force -ErrorAction Ignore -WarningAction Ignore -InformationAction Ignore | Out-Null
                 }
@@ -477,7 +601,19 @@ $syncHash.OutputResult = {
                 $fStream = [System.IO.FileStream]::New($path, [System.IO.FileMode]::Create)
                 $range.Save($fStream, [System.Windows.DataFormats]::Text)
                 $fStream.Close()
-                New-Event -SourceIdentifier Process_Result -MessageData @($path, $syncHash)
+                New-Event -SourceIdentifier Process_Result -MessageData @($path, $syncHash, $false)
+            }
+            if($objHash.msg -match "finished"){ # When port scanning completed, save the result to a file located in c:\PSScanner
+                if(!(Test-Path -Path "C:\PSScanner")) {
+                    New-Item -Path "C:\PSScanner" -type directory -Force -ErrorAction Ignore -WarningAction Ignore -InformationAction Ignore | Out-Null
+                }
+                $range   = New-Object System.Windows.Documents.TextRange($syncHash.Gui.RTB_Output.Document.ContentStart, $syncHash.Gui.RTB_Output.Document.ContentEnd)
+                $dt = Get-Date -Format "MM-dd-yyyy-HH-mm-ss"
+                $path = "c:\PSScanner\" + '(' + $dt + ')' + '-output.txt'
+                $fStream = [System.IO.FileStream]::New($path, [System.IO.FileMode]::Create)
+                $range.Save($fStream, [System.Windows.DataFormats]::Text)
+                $fStream.Close()
+                New-Event -SourceIdentifier Process_Result -MessageData @($path, $syncHash, $true)
             }
         }
     }
@@ -514,12 +650,13 @@ $syncHash.Window.Add_SourceInitialized({
 
 # Setup event handler to sort the output file
 $syncHash.PostPocess = {
+    [bool]$isPortScan = $event.messagedata[2]
     [string]$path = $event.messagedata[0]
     $o = [System.Collections.ArrayList]@() # Original
     $h = [System.Collections.ArrayList]@() # header
     $f = [System.Collections.ArrayList]@() # Footer
     $w = [System.Collections.ArrayList]@() # Working collection
-
+    
     function swapme{
         param(
             [int]$a,
@@ -534,74 +671,78 @@ $syncHash.PostPocess = {
         $o[$b] = $s
     }
 
-    function sortme { # Simple Bubble Sort algorithm
-        [bool]$swapped = $true
+    if(!$isPortScan){
+        function sortme { # Simple Bubble Sort algorithm
+            [bool]$swapped = $true
 
-        while($swapped){
-            $swapped = $false
-            for([int]$i = 0; $i -lt ($w.Count - 1); $i++){
-                if($w[$i] -gt $w[$i+1]){
-                    swapme -a $i -b ($i+1)
-                    $swapped = $true
+            while($swapped){
+                $swapped = $false
+                for([int]$i = 0; $i -lt ($w.Count - 1); $i++){
+                    if($w[$i] -gt $w[$i+1]){
+                        swapme -a $i -b ($i+1)
+                        $swapped = $true
+                    }
                 }
             }
         }
-    }
 
-    $reader = [System.IO.File]::OpenText($path)
-    try {
-        while (($line = $reader.ReadLine()) -ne $null)
-        {
-            $t = $o.Add($line)
+        $reader = [System.IO.File]::OpenText($path)
+        try {
+            while (($line = $reader.ReadLine()) -ne $null)
+            {
+                $t = $o.Add($line)
+            }
         }
-    }
-    finally {
-        $reader.Close()
-    }
-
-    for($i=0; $i -lt 7; $i++) {
-        $t = $h.Add($o[$i])
-    }
-    $o.RemoveRange(0,7)
-
-    $e = $o.IndexOf("     ")
-    $n = $o.Count - $e
-    for($i=$e; $i -le $o.Count; $i++) {
-        $t = $f.Add($o[$i])
-    }
-    $o.RemoveRange($e,$n)
-
-    for($i = 0; $i -lt $o.Count; $i++) {
-        $p = ($o[$i].Substring(0, 15)).trim().Split('.')
-        for($j = 0; $j -lt 4; $j++){
-            $p[$j] = $p[$j].Padleft(3,'0')
+        finally {
+            $reader.Close()
         }
-        $t = $w.Add($p[0] + '.' + $p[1] + '.' + $p[2] + '.' + $p[3])
-    }
-
-    sortme
-
-    for([int]$i = $h.Count - 1; $i -ge 0; $i--){
-        $o.Insert(0, $h[$i])
-    }
-
-    for([int]$i = 0; $i -lt $f.Count; $i++){
-        $t = $o.Add($f[$i])
-    }
-
-    $o | Out-File $path
-
-    Rename-Item -Path $path -NewName $path.Replace("output", "Sorted") -Force
-
-    $objHash = @{
-        font    = "Courier New"
-        size    = "20"
-        color   = "Lime"
-        msg     = "Done"
-        newline = $true
-    }
     
-    $event.MessageData[1].Q.Enqueue($objHash)
+        for($i=0; $i -lt 7; $i++) {
+            $t = $h.Add($o[$i])
+        }
+        $o.RemoveRange(0,7)
+    
+        $e = $o.IndexOf("     ")
+        $n = $o.Count - $e
+        for($i=$e; $i -le $o.Count; $i++) {
+            $t = $f.Add($o[$i])
+        }
+        $o.RemoveRange($e,$n)
+    
+        for($i = 0; $i -lt $o.Count; $i++) {
+            $p = ($o[$i].Substring(0, 15)).trim().Split('.')
+            for($j = 0; $j -lt 4; $j++){
+                $p[$j] = $p[$j].Padleft(3,'0')
+            }
+            $t = $w.Add($p[0] + '.' + $p[1] + '.' + $p[2] + '.' + $p[3])
+        }
+    
+        sortme
+
+        for([int]$i = $h.Count - 1; $i -ge 0; $i--){
+            $o.Insert(0, $h[$i])
+        }
+
+        for([int]$i = 0; $i -lt $f.Count; $i++){
+            $t = $o.Add($f[$i])
+        }
+
+        $o | Out-File $path
+
+        Rename-Item -Path $path -NewName $path.Replace("output", "Sorted") -Force
+    }
+
+    if(!$isPortScan){
+        $objHash = @{
+            font    = "Courier New"
+            size    = "20"
+            color   = "Lime"
+            msg     = "Done"
+            newline = $true
+        }
+
+        $event.MessageData[1].Q.Enqueue($objHash)
+    }
 
     # Update UI, enable all widgets
     if($event.messagedata[1].Gui.RB_CIDR.isChecked){
@@ -619,7 +760,15 @@ $syncHash.PostPocess = {
     $event.messagedata[1].Gui.CB_ARP.IsEnabled       = $true
     $event.messagedata[1].Gui.BTN_Scan.IsEnabled     = $true
     $event.messagedata[1].Gui.BTN_About.IsEnabled    = $true
+    $event.messagedata[1].Gui.BTN_PsAbout.IsEnabled  = $true
     $event.messagedata[1].Gui.BTN_Exit.IsEnabled     = $true
+    $event.messagedata[1].Gui.BTN_PSExit.IsEnabled   = $true
+    $event.messagedata[1].Gui.TB_SP.IsEnabled        = $true
+    $event.messagedata[1].Gui.TB_EP.IsEnabled        = $true
+    $event.messagedata[1].Gui.CB_SOO.IsEnabled       = $true
+    $event.messagedata[1].Gui.BTN_ScanPort.IsEnabled = $true
+    $event.messagedata[1].Gui.BTN_Sweep.IsEnabled = $true
+    $event.messagedata[1].Gui.TB_Sweep.IsEnabled     = $true
     if($event.messagedata[1].Gui.CB_ARP.isChecked){
         $event.messagedata[1].Gui.TB_Delay.IsEnabled = $true
         $event.messagedata[1].Gui.CB_CC.IsEnabled    = $true
@@ -758,7 +907,8 @@ $syncHash.scan_scriptblock = {
         [bool]$more,      # Fetch more info
         [bool]$arp,       # Use ARP scan
         [bool]$ARP_Clear, # Clear ARP Cache before scanning
-        [int]$DelayMS     # Delay for arp ping
+        [int]$DelayMS,    # Delay for arp ping
+        [bool]$ps7        # Use native PS7+ multi-threading
     )
 
     $StartArray = $start.Split('.')
@@ -775,7 +925,7 @@ $syncHash.scan_scriptblock = {
     [System.Diagnostics.Stopwatch]$Time = [System.Diagnostics.Stopwatch]::StartNew()
 
     $syncHash.mutex.WaitOne()
-    $syncHash.Count = 0
+        $syncHash.Count = 0
     $syncHash.mutex.ReleaseMutex()
 
     # Calculate IP address set based on IP range
@@ -861,11 +1011,32 @@ $syncHash.scan_scriptblock = {
             [void]$UDP.Send($Bytes,$Bytes.length)
 
             if ($DelayMS) {
-                [System.Threading.Thread]::Sleep($DelayMS) # set to 0 when your network is fast, other wise set it higher ( 0 - 9 ms)
+                [System.Threading.Thread]::Sleep($DelayMS) # set to 0 when your network is fast, otherwise set it higher ( 0 - 9 ms)
             }
         }
-        # Forking worker threads using PSParallel
-        $IPAddresses | Invoke-Parallel -ThrottleLimit $threshold -ProgressActivity "UDP Pinging Progress" -ScriptBlock $ArpScriptBlock # UDP probing worker threads
+
+        # I feel really stupid here. Please don't blame on me to duplicate the code, but I have no choice
+        # I can't pass any parameters into the thread, so not able to dertermin if the -ps7 switch is given
+        # inside the thread
+        # Forking worker threads using PSParallel or ForEach-Object -Parallel
+        if($ps7){
+            $IPAddresses | ForEach-Object -ThrottleLimit $threshold -Parallel { # Thread to send out UDP requests. When the IP is not in local arp cache, OS will send arp request broadcast, then the local arp cache is built.
+                [int]$delay = $Using:DelayMS
+                $ASCIIEncoding = New-Object System.Text.ASCIIEncoding
+                $Bytes = $ASCIIEncoding.GetBytes("a")
+                $UDP = New-Object System.Net.Sockets.Udpclient
+    
+                $UDP.Connect($_,1)
+                [void]$UDP.Send($Bytes,$Bytes.length)
+
+                if ($delay) {
+                    [System.Threading.Thread]::Sleep($delay) # set to 0 when your network is fast, otherwise set it higher ( 0 - 9 ms)
+                }
+            }
+        } else {
+             # UDP probing worker threads
+            $IPAddresses | Invoke-Parallel -ThrottleLimit $threshold -ProgressActivity "UDP Pinging Progress" -ScriptBlock $ArpScriptBlock            
+        }
 
         $Hosts = arp -a # Dos command for listing local arp cache
 
@@ -879,14 +1050,13 @@ $syncHash.scan_scriptblock = {
         $ips = $IPAddresses # for ICMP scan, we test all IPs
     }
 
-    # Forking worker threads using PSParallel
-    $ips | Invoke-Parallel -ThrottleLimit $threshold -ProgressActivity "Scanning Progress" -ScriptBlock { # test/query worker threads
+    $IPScanner = { # test/query worker threads
         [bool]$test  = $false
         [string]$msg = ""
         [string]$cn  = ""
         [string]$ip  = ""
         [string]$mac = ""
-        
+
         if($arp){
             $test = $true
             $ip = $_.IP
@@ -898,7 +1068,7 @@ $syncHash.scan_scriptblock = {
 
         if($test){ # for arp, all nodes are alive. for ICMP, Test-Connection return value will tell you if it is alive
             $syncHash.mutex.WaitOne()
-            $syncHash.Count = $syncHash.Count + 1
+                $syncHash.Count = $syncHash.Count + 1
             $syncHash.mutex.ReleaseMutex()
 
             $hsEntry = [System.Net.Dns]::GetHostEntry($ip)  # reverse DNS lookup
@@ -963,6 +1133,99 @@ $syncHash.scan_scriptblock = {
         }
     }
 
+    # I feel really stupid here. Please don't blame on me to duplicate the code, but I have no choice
+    # I can't pass any parameters into the thread, so not able to dertermin if the -ps7 switch is given
+    # inside the thread
+    # Forking worker threads using PSParallel or ForEach-Object -Parallel
+    if($ps7){
+        $ips | ForEach-Object -ThrottleLimit $threshold -Parallel { # test/query worker threads
+            [bool]$test  = $false
+            [string]$msg = ""
+            [string]$cn  = ""
+            [string]$ip  = ""
+            [string]$mac = ""
+
+            $sync = $Using:syncHash
+    
+            if($Using:arp){
+                $test = $true
+                $ip = $_.IP
+                $mac = $_.MACAddress
+            } else {
+                $ip = $_
+                $test = [bool](Test-Connection -BufferSize 32 -Count 3 -ComputerName $ip -Quiet -ErrorAction SilentlyContinue)
+            }
+    
+            if($test){ # for arp, all nodes are alive. for ICMP, Test-Connection return value will tell you if it is alive
+                $sync.mutex.WaitOne()
+                    $sync.Count = $sync.Count + 1
+                $sync.mutex.ReleaseMutex()
+    
+                $hsEntry = [System.Net.Dns]::GetHostEntry($ip)  # reverse DNS lookup
+                    
+                if($hsEntry){
+                    if($more){
+                        $cn = (($hsEntry.HostName).Split('.'))[0]
+                    } else {
+                        $cn = $hsEntry.HostName
+                    }
+                } else {
+                    $cn = "..."
+                }
+                    
+                $msg = $ip.PadRight(17,' ') + $cn
+    
+                Remove-Variable -Name 'ip'
+    
+                if($more){
+                    $a = query user /server:$cn # Query current logon user
+                    if($a){
+                        $b = ((($a[1]) -replace '^>', '') -replace '\s{2,}', ',').Trim() | ForEach-Object {
+                            if ($_.Split(',').Count -eq 5) {
+                                Write-Output ($_ -replace '(^[^,]+)', '$1,')
+                            } else {
+                                Write-Output $_
+                            }
+                        }
+                        $c = ($b.split(','))[0]
+                    } else {
+                        $c = "..."
+                    }
+                    $msg = $msg.PadRight(49,' ') + $c
+                    
+                    # WMI remote query serial number, works only when RPC is running on the target
+                    $sn = (Get-WmiObject -ComputerName $cn -class win32_bios).SerialNumber
+                    if($sn){
+                        $msg = $msg.PadRight(69,' ') + $sn                    } 
+                    else {
+                        $msg = $msg.PadRight(69,' ') + "..."
+                    }
+    
+                    if($Using:arp){
+                        $msg = $msg.PadRight(83,' ') + $mac
+                    }
+                } else {
+                    if($Using:arp){
+                        $msg = $msg.PadRight(64,' ') + $mac
+                    }
+                }
+                # we need to limit local function call as less as possible
+                $objHash = @{
+                    font    = "Courier New"
+                    size    = "20"
+                    color   = "MediumSpringGreen"
+                    msg     = $msg
+                    newline = $true
+                }
+                $sync.Q.Enqueue($objHash)
+                Remove-Variable -Name "objHash"
+                Remove-Variable -Name "mac"
+            }
+        }
+    } else {
+        $ips | Invoke-Parallel -ThrottleLimit $threshold -ProgressActivity "IP Scanning Progress" -ScriptBlock $IPScanner
+    }
+
     # total alive nodes
     if($arp){
         if($Hosts){
@@ -1009,7 +1272,12 @@ $syncHash.scan_scriptblock = {
     $msg = " node(s) alive."
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$true
 
-    $msg = "===== Scanning network " + $start +" --- " + $end + " completed ====="
+    if($ps7){
+        $w = "(Native)"
+    } else {
+        $w = "(Module)"
+    }
+    $msg = "===== Scanning network " + $start +" --- " + $end + " completed $w ====="
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","YellowGreen",$msg,$true
 
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
@@ -1023,7 +1291,7 @@ $syncHash.scan_scriptblock = {
 
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Cyan","Saving data, please ",$false
     Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Yellow","DO NOT",$false
-    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Cyan"," close the application until finished ... ",$false
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Cyan"," close the application until it's done ... ",$false
 }
 
 # Handle Scan Button click event
@@ -1134,7 +1402,12 @@ $syncHash.GUI.BTN_Scan.Add_Click({
         $msg = "[ICMP] "
     }
     Show-Result -Font "Courier New" -Size "18" -Color "Lime" -Text $msg -NewLine $false
-    $msg = "Creating worker threads with Runspacepool capacity $threshold ..."
+    if($ps7){
+        $w = "(Native)"
+    } else {
+        $w = "(Module)"
+    }
+    $msg = "Creating worker threads with Runspacepool capacity $threshold $w ..."
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
 
     Invoke-Command $syncHash.Devider_scriptblock -ErrorAction SilentlyContinue # Draw a colorful ribon
@@ -1150,12 +1423,20 @@ $syncHash.GUI.BTN_Scan.Add_Click({
     $syncHash.Gui.CB_ARP.IsEnabled       = $false
     $syncHash.Gui.BTN_Scan.IsEnabled     = $false
     $syncHash.Gui.BTN_About.IsEnabled    = $false
+    $syncHash.Gui.BTN_PsAbout.IsEnabled  = $false
     $syncHash.Gui.BTN_Exit.IsEnabled     = $false
+    $syncHash.Gui.BTN_PSExit.IsEnabled   = $false
     $syncHash.Gui.TB_Delay.IsEnabled     = $false
     $syncHash.Gui.CB_CC.IsEnabled        = $false
+    $syncHash.Gui.TB_SP.IsEnabled        = $false
+    $syncHash.Gui.TB_EP.IsEnabled        = $false
+    $syncHash.Gui.CB_SOO.IsEnabled       = $false
+    $syncHash.Gui.BTN_ScanPort.IsEnabled = $false
+    $syncHash.Gui.BTN_Sweep.IsEnabled = $false
+    $syncHash.Gui.TB_Sweep.IsEnabled     = $false
 
     # create an extra Powershell session and add the script block to execute
-    $Session = [PowerShell]::Create().AddScript($syncHash.scan_scriptblock).AddArgument($range.Start).AddArgument($range.end).AddArgument($threshold).AddArgument($syncHash.GUI.cb_More.IsChecked).AddArgument($syncHash.Gui.CB_ARP.IsChecked).AddArgument($syncHash.GUI.CB_CC.IsChecked).AddArgument($delay)
+    $Session = [PowerShell]::Create().AddScript($syncHash.scan_scriptblock).AddArgument($range.Start).AddArgument($range.end).AddArgument($threshold).AddArgument($syncHash.GUI.cb_More.IsChecked).AddArgument($syncHash.Gui.CB_ARP.IsChecked).AddArgument($syncHash.GUI.CB_CC.IsChecked).AddArgument($delay).AddArgument($ps7.IsPresent)
 
     # execute the code in this session
     $Session.RunspacePool = $RunspacePool
@@ -1168,8 +1449,8 @@ $syncHash.GUI.BTN_Scan.Add_Click({
     $syncHash.Gui.PB.IsIndeterminate = $true # start progressbar animation
 })
 
-# Handle ? button press
-$syncHash.Gui.BTN_About.add_click({
+# Show help and license info
+Function about{
     $copyright = [char]169
     [int]$i = 0
     [bool]$nl = $false
@@ -1187,7 +1468,7 @@ $syncHash.Gui.BTN_About.add_click({
     $syncHash.Gui.RTB_Output.ScrollToEnd()
     $syncHash.Gui.RTB_Output.Paste()
 
-    Show-Result -Font "Courier New" -Size "20" -Color "Lime" -Text "$copyright David Wang, 2021 - V1.0" -NewLine $true
+    Show-Result -Font "Courier New" -Size "20" -Color "Lime" -Text "$copyright David Wang, 2022 - V2.0" -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "Required module: PSParallel" -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "LightGreen" -Text " (By Staffan Gustafsson)" -NewLine $false
@@ -1198,13 +1479,17 @@ $syncHash.Gui.BTN_About.add_click({
     $ver = $PSVersionTable.PSVersion.ToString()
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $ver -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "Required account type: " -NewLine $false
-    Show-Result -Font "Courier New" -Size "18" -Color "Pink" -Text "Elevated domain admin" -NewLine $true
-    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Pink" -Text "Domain admin for more information on each alive node" -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Pink" -Text "                       Local admin for ARP scan" -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "Main features        : " -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text "IP Scan(ICMP/ARP), Port Scan/Sweep(TCP handshake)" -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "ESC" -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text " to clear output window" -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "Chartreuse" -Text "  Auto-save sorted result to C:\PSScanner" -NewLine $true
-
-    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "           " -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "F1" -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "  to switch between IP scan and Port scan/sweep" -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "Switch -ps7" -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "  to use native method for multi-threading on Powershell Core 7+" -NewLine $true
 
     for($i=0;$i -lt 65; $i++){
         if($i -eq 64) {$nl = $true} else {$nl = $false}
@@ -1213,30 +1498,796 @@ $syncHash.Gui.BTN_About.add_click({
     }
 
     Show-Result -Font "Courier New" -Size "20" -Color "Lime" -Text "The MIT License (MIT)" -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "Cyan" -Text "Copyright (c) 2021, David Wang" -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "Cyan" -Text "                 " -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'Permission is hereby granted, free of charge, to any person obtaining a copy of this software and' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'associated documentation files (the "Software"), to deal in the Software without restriction,' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'subject to the following conditions:' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text '                 ' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'The above copyright notice and this permission notice shall be included in all copies or substantial' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text 'portions of the Software.' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "LightGreen" -Text '                 ' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "Yellow" -Text 'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "Yellow" -Text 'LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "Yellow" -Text 'IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "Yellow" -Text 'WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE' -NewLine $true
-    Show-Result -Font "Courier New" -Size "16" -Color "Yellow" -Text 'SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.' -NewLine $true
+    Show-Result -Font "Courier New" -Size "16" -Color "Cyan" -Text "Copyright $copyright 2022, David Wang" -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "Cyan" -Text "                 " -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "LightGreen" -Text 'Permission is hereby granted, free of charge, to any person obtaining a copy of this software and' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "LightGreen" -Text 'associated documentation files (the "Software"), to deal in the Software without restriction,' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "LightGreen" -Text 'including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "LightGreen" -Text 'and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "LightGreen" -Text 'subject to the following conditions:' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "LightGreen" -Text '                 ' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "LightGreen" -Text 'The above copyright notice and this permission notice shall be included in all copies or substantial' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "LightGreen" -Text 'portions of the Software.' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "LightGreen" -Text '                 ' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "Yellow" -Text 'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "Yellow" -Text 'LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "Yellow" -Text 'IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "Yellow" -Text 'WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE' -NewLine $true
+    Show-Result -Font "Courier New" -Size "14" -Color "Yellow" -Text 'SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.' -NewLine $true
+}
 
-    for($i=0;$i -lt 65; $i++){
-        if($i -eq 64) {$nl = $true} else {$nl = $false}
-        if($i % 2 -eq 0) {$color = "Lime"} else {$color = "Red"}
-        Show-Result -Font "Courier New" -Size "30" -Color $color -Text "$emoji_box_h" -NewLine $nl
-    }
+# Handle ? button press
+$syncHash.Gui.BTN_About.add_click({
+    about
+})
+$syncHash.Gui.BTN_PsAbout.add_click({
+    about
 })
 
+# Performing port scan is a different thread
+$syncHash.PortScan_scriptblock = {
+    param(
+        [string]$cn,       # Target IP/name
+        [int]$start_port,  # Start port
+        [int]$end_port,    # End port
+        [int]$threshold,   # Thread pool size
+        [bool]$openOnly,   # Show open ports only
+        [bool]$ps7         # Use native PS7+ multi-threading
+    )
+
+    $syncHash.mutex.WaitOne()
+        $syncHash.opened = 0
+        $syncHash.closed = 0
+        $syncHash.filtered = 0
+    $syncHash.mutex.ReleaseMutex()
+
+    $Time = [System.Diagnostics.Stopwatch]::StartNew()
+
+    # Port scan worker thread
+    $TcpScan = {
+        $tcpSocket = new-Object system.Net.Sockets.TcpClient
+        $handshake = $tcpSocket.ConnectAsync($cn,$_)   
+        $msg = $_.tostring().PadRight(10)
+        $msg = "          " + $msg
+        $result = ""
+
+        for($i=0; $i -lt 10; $i++) {
+            if ($handshake.isCompleted) { break; }
+            Start-Sleep -milliseconds 1000
+          }
+        $tcpSocket.Close();
+
+        $emoji_check  = [char]::ConvertFromUtf32(0x02714) # ✔
+        $emoji_close  = [char]::ConvertFromUtf32(0x026D4) # ⛔
+
+        if ($handshake.isFaulted -and ($handshake.Exception.InnerException -match "actively refused")) {
+            $result = $emoji_close
+            $syncHash.mutex.WaitOne()
+                $syncHash.closed += 1
+            $syncHash.mutex.ReleaseMutex()
+        } elseif ($handshake.Status -eq "RanToCompletion") {
+            $result = $emoji_check
+            $syncHash.mutex.WaitOne()
+                $syncHash.opened += 1
+            $syncHash.mutex.ReleaseMutex()
+        }
+
+        $msg += $result
+        [bool]$show = $false
+
+        if($openOnly){
+            if($result -eq $emoji_check){
+                $show = $true
+            }
+        } else {
+            if($result -eq $emoji_check -or $result -eq $emoji_close){
+                $show = $true
+            }
+        }
+        if($show){
+            $objHash = @{
+                font    = "Courier New"
+                size    = "20"
+                color   = "MediumSpringGreen"
+                msg     = $msg
+                newline = $true
+            }
+            $syncHash.Q.Enqueue($objHash)
+            Remove-Variable -Name "objHash"
+        }
+    }
+
+    # I feel really stupid here. Please don't blame on me to duplicate the code, but I have no choice
+    # I can't pass any parameters into the thread, so not able to dertermin if the -ps7 switch is given
+    # inside the thread
+    if($ps7){
+        $start_port .. $end_port | ForEach-Object -ThrottleLimit $threshold -Parallel {
+            $sync = $Using:syncHash
+
+            $tcpSocket = new-Object system.Net.Sockets.TcpClient
+            $handshake = $tcpSocket.ConnectAsync($Using:cn,$_)   
+            $msg = $_.tostring().PadRight(10)
+            $msg = "          " + $msg
+            $result = ""
+
+            for($i=0; $i -lt 10; $i++) {
+                if ($handshake.isCompleted) { break; }
+                Start-Sleep -milliseconds 1000
+            }
+            $tcpSocket.Close();
+
+            $emoji_check  = [char]::ConvertFromUtf32(0x02714) # ✔
+            $emoji_close  = [char]::ConvertFromUtf32(0x026D4) # ⛔
+
+            if ($handshake.isFaulted -and ($handshake.Exception.InnerException -match "actively refused")) {
+                $result = $emoji_close
+                $sync.mutex.WaitOne()
+                    $sync.closed += 1
+                $sync.mutex.ReleaseMutex()
+            } elseif ($handshake.Status -eq "RanToCompletion") {
+                $result = $emoji_check
+                $sync.mutex.WaitOne()
+                    $sync.opened += 1
+                $sync.mutex.ReleaseMutex()
+            }
+
+            $msg += $result
+            [bool]$show = $false
+
+            if($Using:openOnly){
+                if($result -eq $emoji_check){
+                    $show = $true
+                }
+            } else {
+                if($result -eq $emoji_check -or $result -eq $emoji_close){
+                    $show = $true
+                }
+            }
+            if($show){
+                $objHash = @{
+                    font    = "Courier New"
+                    size    = "20"
+                    color   = "MediumSpringGreen"
+                    msg     = $msg
+                    newline = $true
+                }
+                $sync.Q.Enqueue($objHash)
+                Remove-Variable -Name "objHash"
+            }
+        }
+    } else {
+        $start_port .. $end_port | Invoke-Parallel -ThrottleLimit $threshold -ProgressActivity "TCP Port Scanning Progress" -ScriptBlock $TcpScan
+    }
+
+    $msg = "Total "
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White","     ",$true
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
+
+    $msg = ($end_port - $start_port + 1).ToString()
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
+
+    $msg = " port(s) scanned in ["
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
+
+    $currenttime = $Time.Elapsed
+
+    $d = ($currenttime.days).ToString()
+    $h = ($currenttime.hours).ToString()
+    $m = ($currenttime.minutes).ToString()
+    $s = ($currenttime.seconds).ToString()
+    $t = ($currenttime.Milliseconds).ToString()
+    $msg = $d + ":" + $h + ":" + $m + ":" + $s + ":" + $t
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
+    $msg = "], Opened("
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
+
+    $syncHash.mutex.WaitOne()
+        $msg = ($syncHash.opened).ToString()
+    $syncHash.mutex.ReleaseMutex()
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Magenta",$msg,$false
+
+    $msg = ") Closed("
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
+
+    $syncHash.mutex.WaitOne()
+        $msg = ($syncHash.closed).ToString()
+    $syncHash.mutex.ReleaseMutex()
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Magenta",$msg,$false
+
+    $msg = ") Filtered("
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
+
+    $syncHash.mutex.WaitOne()
+        $msg = ($end_port - $start_port + 1 - $syncHash.opened - $syncHash.closed).ToString()
+    $syncHash.mutex.ReleaseMutex()
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Magenta",$msg,$false
+
+    $msg = ")"
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$true
+
+    if($ps7){
+        $w = "(Native)"
+    } else {
+        $w = "(Module)"
+    }
+    $msg = "===== Scanning TCP port range " + $start_port +" --- " + $end_port + " Finished $w ====="
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","YellowGreen",$msg,$true
+
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
+
+    $syncHash.mutex.WaitOne()
+        $syncHash.opened = 0
+        $syncHash.closed = 0
+        $syncHash.filtered = 0
+    $syncHash.mutex.ReleaseMutex()
+
+    $Time.Stop()
+    Remove-Variable -Name "Time"
+}
+
+# Handle ScanPort Button click event
+$syncHash.GUI.BTN_ScanPort.Add_Click({
+    [int]$threshold = 50
+    [int]$sp = 0
+    [int]$ep = 0
+
+    $syncHash.Gui.rtb_Output.Document.Blocks.Clear()
+
+    if([string]::IsNullOrEmpty($syncHash.Gui.TB_Threshold.text)){
+        $syncHash.Gui.TB_Threshold.text = "50"
+        $threshold = 50
+    } else {
+        $threshold = ($syncHash.GUI.TB_Threshold.text) -as [int]
+    }
+    if($threshold -gt 128) {
+        $threshold = 128
+        $syncHash.Gui.TB_Threshold.text = "128"
+    }
+    if($threshold -lt 1) {
+        $threshold = 1
+        $syncHash.Gui.TB_Threshold.text = "1"
+    }
+
+    if([string]::IsNullOrEmpty($syncHash.Gui.TB_SP.text)){
+        $msg = "Starting port missing..."
+        Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
+        return
+    }
+
+    if([string]::IsNullOrEmpty($syncHash.Gui.TB_EP.text)){
+        $msg = "Ending port missing..."
+        Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
+        return
+    }
+
+    $sp = ($syncHash.Gui.TB_SP.text) -as [int]
+    $ep = ($syncHash.Gui.TB_EP.text) -as [int]
+
+    if($sp -gt 65535 -or $ep -gt 65535) {
+        $msg = "Port number should be 1-65535"
+        Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
+        return
+    }
+
+    if($sp -gt $ep){
+        $msg = "Wrong port range."
+        Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
+        return
+    }
+
+    [string]$cn = $syncHash.Gui.TB_IPAddress.text
+
+    if([string]::IsNullOrEmpty($cn)){
+        $msg = "Please provide the computername or IP address of the target machine."
+        Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
+        return
+    }
+
+    Show-Result -Font "Courier New" -Size "20" -Color "Lime" -Text "Port Scanning" -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "----------------------------------------------------" -NewLine $true
+
+    $msg = "Start Port = " + $syncHash.Gui.TB_SP.text
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
+
+    $msg = "End Port   = " + $syncHash.Gui.TB_EP.text
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
+
+    $msg = "Target     = " + $cn
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
+
+    if($ps7){
+        $w = "(Native)"
+    } else {
+        $w = "(Module)"
+    }
+    $msg = "Creating worker threads with threshold $threshold $w ..."
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
+
+    Invoke-Command $syncHash.Devider_scriptblock
+
+    # Disable wedgets
+    $syncHash.Gui.TB_IPAddress.IsEnabled = $false
+    $syncHash.Gui.TB_NetMask.IsEnabled   = $false
+    $syncHash.Gui.TB_CIDR.IsEnabled      = $false
+    $syncHash.Gui.TB_Threshold.IsEnabled = $false
+    $syncHash.Gui.RB_Mask.IsEnabled      = $false
+    $syncHash.Gui.RB_CIDR.IsEnabled      = $false
+    $syncHash.Gui.CB_More.IsEnabled      = $false
+    $syncHash.Gui.CB_ARP.IsEnabled       = $false
+    $syncHash.Gui.BTN_Scan.IsEnabled     = $false
+    $syncHash.Gui.BTN_About.IsEnabled    = $false
+    $syncHash.Gui.BTN_PsAbout.IsEnabled  = $false
+    $syncHash.Gui.BTN_Exit.IsEnabled     = $false
+    $syncHash.Gui.BTN_PSExit.IsEnabled   = $false
+    $syncHash.Gui.TB_Delay.IsEnabled     = $false
+    $syncHash.Gui.CB_CC.IsEnabled        = $false
+    $syncHash.Gui.TB_SP.IsEnabled        = $false
+    $syncHash.Gui.TB_EP.IsEnabled        = $false
+    $syncHash.Gui.CB_SOO.IsEnabled       = $false
+    $syncHash.Gui.BTN_ScanPort.IsEnabled = $false
+    $syncHash.Gui.BTN_Sweep.IsEnabled = $false
+    $syncHash.Gui.TB_Sweep.IsEnabled     = $false
+
+    # create the extra Powershell session and add the script block to execute
+    $Session = [PowerShell]::Create().AddScript($syncHash.PortScan_scriptblock).AddArgument($cn).AddArgument($sp).AddArgument($ep).AddArgument($threshold).AddArgument($syncHash.GUI.CB_SOO.IsChecked).AddArgument($ps7.IsPresent)
+
+    # execute the code in this session
+    $Session.RunspacePool = $RunspacePool
+    $Handle = $Session.BeginInvoke()
+    $syncHash.Jobs.Add([PSCustomObject]@{
+        'Session' = $Session
+        'Handle' = $Handle
+    })
+    [System.GC]::Collect()
+
+    # start progressbar animation
+    $syncHash.Gui.PB.IsIndeterminate = $true
+})
+
+# Thread to perform the TCP sweep
+$syncHash.PortSweep_scriptblock = {
+    param(
+        [string]$start,   # Start IP
+        [string]$end,     # End IP
+        [int]$threshold,  # Max number of threads
+        [int[]]$ports,    # Port list
+        [bool]$ps7        # Use native PS7+ multi-threading
+    )
+
+    $StartArray = $start.Split('.')
+    $EndArray = $end.Split('.')
+
+    [int]$Oct2First = $StartArray[1] -as [int]
+    [int]$Oct2Last  = $EndArray[1]   -as [int]
+    [int]$Oct3First = $StartArray[2] -as [int]
+    [int]$Oct3Last  = $EndArray[2]   -as [int]
+    [int]$Oct4First = $StartArray[3] -as [int]
+    [int]$Oct4Last  = $EndArray[3]   -as [int]
+    [string]$msg    = ""
+
+    [System.Diagnostics.Stopwatch]$Time = [System.Diagnostics.Stopwatch]::StartNew()
+
+    $syncHash.mutex.WaitOne()
+    $syncHash.Count = 0
+    $syncHash.mutex.ReleaseMutex()
+
+    # Calculate IP address set based on IP range
+    # In case of 8 <= CIDR < 16
+    if(($StartArray[0] -eq $EndArray[0]) -and ($StartArray[1] -ne $EndArray[1])){
+        if($Oct4First -eq 0){
+            $Oct4First++
+        }
+
+        if($Oct4Last -eq 255){
+            $Oct4Last--
+        }
+
+        $IPAddresses = $Oct2First..$Oct2Last | ForEach-Object { # This will be absolutely slow (3 layers of nested loop)
+            $y = $_
+            $Oct3First..$Oct3Last | ForEach-Object {
+                $t = $_
+                $Oct4First..$Oct4Last | ForEach-Object {
+                    $StartArray[0]+'.'+$y+'.'+$t+'.'+$_
+                }
+            }
+        }
+    }
+
+    # In case of 16 <= CIDR < 24
+    if(($StartArray[0] -eq $EndArray[0]) -and ($StartArray[1] -eq $EndArray[1]) -and ($StartArray[2] -ne $EndArray[2])){
+        if($Oct4First -eq 0){
+            $Oct4First++
+        }
+
+        if($Oct4Last -eq 255){
+            $Oct4Last--
+        }
+
+        $IPAddresses = $Oct3First..$Oct3Last | ForEach-Object {
+            $t = $_
+            $Oct4First..$Oct4Last | ForEach-Object {
+                $StartArray[0]+'.'+$StartArray[1]+'.'+$t+'.'+$_
+            }
+        }
+    }
+
+    # In case of CIDR >= 24
+    if(($StartArray[0] -eq $EndArray[0]) -and ($StartArray[1] -eq $EndArray[1]) -and ($StartArray[2] -eq $EndArray[2]) -and ($StartArray[3] -ne $EndArray[3])){ 
+        if($Oct4First -eq 0){
+            $Oct4First++
+        }
+
+        if($Oct4Last -eq 255){
+            $Oct4Last--
+        }
+
+        $IPAddresses = $Oct4First..$Oct4Last | ForEach-Object {$StartArray[0]+'.'+$StartArray[1]+'.'+$StartArray[2]+'.'+$_}
+    }
+
+    # in case there is only 1 IP
+    if(($IPAddresses.GetType().name) -eq "String"){
+        $IPAddresses = @($IPAddresses)
+    }
+
+    # Building target object
+    $targets = @()
+    $IPAddresses | ForEach-Object {
+        for($i=0; $i -lt $ports.Count; $i++){
+            $item = [PSCustomObject]@{
+                'ip'   = $_
+                'port' = $ports[$i]
+            }
+            $targets += $item
+        }
+    }
+
+    # TCP sweep work thread
+    $PortSweep = {
+        # We use TCP handshake to determine if the port is open
+        $tcpSocket = new-Object system.Net.Sockets.TcpClient
+        $handshake = $tcpSocket.ConnectAsync($_.ip,$_.port)   
+        $msg = $_.ip.PadRight(16) + " :" + $_.port.tostring().PadRight(10)
+        $result = ""
+
+        for($i=0; $i -lt 10; $i++) {
+            if ($handshake.isCompleted) { break; }
+            Start-Sleep -milliseconds 1000
+          }
+        $tcpSocket.Close();
+
+        $emoji_check  = [char]::ConvertFromUtf32(0x02714) # ✔
+        $emoji_close  = [char]::ConvertFromUtf32(0x026D4) # ⛔
+
+        # Actively refuse = RST "The port is not filtered and no process listening on that port"
+        # No response = The prot is filteres as connection time out and there is no response from the target
+        if ($handshake.isFaulted -and ($handshake.Exception.InnerException -match "actively refused")) {
+            $result = $emoji_close
+            $syncHash.mutex.WaitOne()
+                $syncHash.closed += 1
+            $syncHash.mutex.ReleaseMutex()
+        } elseif ($handshake.Status -eq "RanToCompletion") {
+            $result = $emoji_check
+            $syncHash.mutex.WaitOne()
+                $syncHash.opened += 1
+            $syncHash.mutex.ReleaseMutex()
+        }
+
+        $msg += $result
+
+        if($result -eq $emoji_check){
+            $objHash = @{
+                font    = "Courier New"
+                size    = "20"
+                color   = "MediumSpringGreen"
+                msg     = $msg
+                newline = $true
+            }
+            $syncHash.Q.Enqueue($objHash)
+            Remove-Variable -Name "objHash"
+        }
+    }
+
+    # I feel really stupid here. Please don't blame on me to duplicate the code, but I have no choice
+    # I can't pass any parameters into the thread, so not able to dertermin if the -ps7 switch is given
+    # inside the thread
+    # Forking worker threads using PSParallel
+    if($ps7){
+        $targets | ForEach-Object -ThrottleLimit $threshold -Parallel {
+            $sync = $Using:syncHash
+            # We use TCP handshake to determine if the port is open
+            $tcpSocket = new-Object system.Net.Sockets.TcpClient
+            $handshake = $tcpSocket.ConnectAsync($_.ip,$_.port)   
+            $msg = $_.ip.PadRight(16) + " :" + $_.port.tostring().PadRight(10)
+            $result = ""
+    
+            for($i=0; $i -lt 10; $i++) {
+                if ($handshake.isCompleted) { break; }
+                Start-Sleep -milliseconds 1000
+              }
+            $tcpSocket.Close();
+    
+            $emoji_check  = [char]::ConvertFromUtf32(0x02714) # ✔
+            $emoji_close  = [char]::ConvertFromUtf32(0x026D4) # ⛔
+    
+            # Actively refuse = RST "The port is not filtered and no process listening on that port"
+            # No response = The prot is filteres as connection time out and there is no response from the target
+            if ($handshake.isFaulted -and ($handshake.Exception.InnerException -match "actively refused")) {
+                $result = $emoji_close
+                $sync.mutex.WaitOne()
+                    $sync.closed += 1
+                $sync.mutex.ReleaseMutex()
+            } elseif ($handshake.Status -eq "RanToCompletion") {
+                $result = $emoji_check
+                $sync.mutex.WaitOne()
+                    $sync.opened += 1
+                $sync.mutex.ReleaseMutex()
+            }
+    
+            $msg += $result
+    
+            if($result -eq $emoji_check){
+                $objHash = @{
+                    font    = "Courier New"
+                    size    = "20"
+                    color   = "MediumSpringGreen"
+                    msg     = $msg
+                    newline = $true
+                }
+                $sync.Q.Enqueue($objHash)
+                Remove-Variable -Name "objHash"
+            }
+        }
+    } else {
+        $targets | Invoke-Parallel -ThrottleLimit $threshold -ProgressActivity "Sweeping Progress" -ScriptBlock $PortSweep
+    }
+    
+    # Display the scan summary
+    $msg = "Total "
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White","     ",$true
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
+
+    $msg = $IPAddresses.Count.ToString()
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
+
+    $msg = " IP(s) scanned in ["
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
+
+    $currenttime = $Time.Elapsed
+
+    $d = ($currenttime.days).ToString()
+    $h = ($currenttime.hours).ToString()
+    $m = ($currenttime.minutes).ToString()
+    $s = ($currenttime.seconds).ToString()
+    $t = ($currenttime.Milliseconds).ToString()
+    $msg = $d + ":" + $h + ":" + $m + ":" + $s + ":" + $t
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Orange",$msg,$false
+    $msg = "]. Ports Opened("
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
+
+    $syncHash.mutex.WaitOne()
+        $msg = ($syncHash.opened).ToString()
+    $syncHash.mutex.ReleaseMutex()
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Magenta",$msg,$false
+
+    $msg = "), Closed("
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$false
+
+    $syncHash.mutex.WaitOne()
+        $msg = ($syncHash.closed).ToString()
+    $syncHash.mutex.ReleaseMutex()
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","Magenta",$msg,$false
+
+    $msg = ")"
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","White",$msg,$true
+
+    if($ps7){
+        $w = "(Native)"
+    } else {
+        $w = "(Module)"
+    }
+    $msg = "===== Port Sweeping Completed $w ====="
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","20","YellowGreen",$msg,$true
+
+    Invoke-Command $syncHash.outputFromThread_scriptblock -ArgumentList "Courier New","18","Black"," ",$true
+
+    $syncHash.mutex.WaitOne()
+        $syncHash.opened = 0
+        $syncHash.closed = 0
+        $syncHash.filtered = 0
+    $syncHash.mutex.ReleaseMutex()
+
+    $Time.Stop()
+
+    $tcpSocket.Dispose()
+    $handshake.Dispose()
+
+    Remove-Variable -Name "Time"
+    Remove-Variable -Name "IPAddresses"
+    Remove-Variable -Name "targets"
+    Remove-Variable -Name "StartArray"
+    Remove-Variable -Name "EndArray"
+    Remove-Variable -Name "tcpSocket"
+    Remove-Variable -Name "handshake"
+}
+
+# Handle Sweep Button click event
+$syncHash.GUI.BTN_Sweep.Add_Click({
+    [int]$threshold = 50
+
+    $syncHash.Gui.rtb_Output.Document.Blocks.Clear()
+
+    # Threshold input validation
+    if([string]::IsNullOrEmpty($syncHash.Gui.TB_Threshold.text)){
+        $syncHash.Gui.TB_Threshold.text = "50"
+        $threshold = 50
+    } else {
+        $threshold = ($syncHash.GUI.TB_Threshold.text) -as [int]
+    }
+    if($threshold -gt 128) {
+        $threshold = 128
+        $syncHash.Gui.TB_Threshold.text = "128"
+    }
+    if($threshold -lt 1) {
+        $threshold = 1
+        $syncHash.Gui.TB_Threshold.text = "1"
+    }
+
+    [string]$cn = $syncHash.Gui.TB_IPAddress.text
+
+    if([string]::IsNullOrEmpty($cn)){
+        $msg = "Please provide the computername or IP address of the target machine."
+        Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
+        return
+    }
+
+    # Get the port list
+    if([string]::IsNullOrEmpty($syncHash.Gui.TB_Sweep.text)){
+        $msg = "Please provide a list of ports to sweep, seperated with comma."
+        Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
+        return
+    }
+
+    # Remove all duplidated commas
+    $syncHash.Gui.TB_Sweep.text = $syncHash.Gui.TB_Sweep.text -replace ",+" , ","
+
+    # If the last character is comma, remove it
+    if($syncHash.Gui.TB_Sweep.text[$syncHash.Gui.TB_Sweep.text.length - 1] -eq ","){
+        $syncHash.Gui.TB_Sweep.text = $syncHash.Gui.TB_Sweep.text.Substring(0, $syncHash.Gui.TB_Sweep.text.Length - 1)
+    }
+
+    # Generate integer port list
+    $temp= $syncHash.Gui.TB_Sweep.text.Split(",")
+    $ports = foreach($number in $temp) { # Port list
+        if($number -ne $null -and $number -ne 0 -and $number -ne ""){
+            try {
+                [int]::parse($number)
+            }
+            catch {
+                Invoke-Expression -Command $number;
+            }
+        }
+    }
+
+    # Validate all ports
+    for($i=0; $i -lt $ports.Count; $i++){
+        if($ports[$i] -lt 0 -or $ports[$i] -gt 65535){
+            $msg = "Illegal port number detected [0-65535]."
+            Show-Result -Font "Courier New" -Size "20" -Color "Red" -Text $msg -NewLine $true
+            return
+        }
+    }
+
+    # Get start/end IP
+    if(!(Test-IPAddress($syncHash.Gui.TB_IPAddress.text))){ # IP Address validation
+        $msg = "Illegal IP address detected."
+        Show-Result -Font "Courier New" -Size "20" -Color "Red" -Text $msg -NewLine $true
+        return
+    }
+
+    [string]$ip = $syncHash.GUI.TB_IPAddress.text
+
+    # Net mask is selected
+    if($syncHash.GUI.RB_Mask.IsChecked){ # Subnet mask validation
+        if([string]::IsNullOrEmpty($syncHash.Gui.TB_NetMask.text)){
+            $msg = "Please provide the network mask."
+            Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
+            return
+        }
+
+        if(!(CheckSubnetMask($syncHash.Gui.TB_NetMask.text))) {
+            $msg = "Illegal subnet mask detected."
+            Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
+            return
+        }
+
+        if(!($syncHash.Gui.TB_NetMask.text.SubString(0,4) -eq '255.')){
+            $msg = "IP range too large to handle. [CIDR >= 8] or [Subnet Mask >= 255.0.0.0]"
+            Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text $msg -NewLine $true
+            return
+        }
+
+        $mask = ($syncHash.GUI.TB_NetMask.text)
+
+        $range = Get-IPrange -ip $ip -mask $mask
+    }
+
+    # CIDR is selected
+    if($syncHash.GUI.RB_CIDR.IsChecked){ # CIDR validation
+        if([string]::IsNullOrEmpty($syncHash.Gui.TB_CIDR.text)){
+            $msg = "Please provide CIDR."
+            Show-Result -Font "Courier New" -Size "18" -Color "Red" -Text $msg -NewLine $true
+            return
+        }
+        $cidr = $syncHash.GUI.TB_CIDR.text -as [int]
+        if($cidr -lt 8 -or $cidr -gt 31){
+            $msg = "IP range too large to handle. [CIDR >= 8] or [Subnet Mask >= 255.0.0.0]"
+            Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text $msg -NewLine $true
+            return
+        }
+        $range = Get-IPrange -ip $ip -cidr $cidr
+    }
+
+    Show-Result -Font "Courier New" -Size "20" -Color "Lime" -Text "Port Sweeping" -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "----------------------------------------------------" -NewLine $true
+
+    # Remove spaces
+    $syncHash.Gui.TB_Sweep.text = $syncHash.Gui.TB_Sweep.text -replace " ", ""
+    $msg = "Port List : " + $syncHash.Gui.TB_Sweep.Text
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
+
+    $msg = "Start IP  : " + $range.Start
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
+
+    $msg = "End IP    : " + $range.end
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
+
+    if($ps7.IsPresent){
+        $w = "(Native)"
+    } else {
+        $w = "(Module)"
+    }
+    $msg = "Creating worker threads with threshold $threshold $w ..."
+    Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
+
+    Invoke-Command $syncHash.Devider_scriptblock
+
+    # Disable wedgets
+    $syncHash.Gui.TB_IPAddress.IsEnabled = $false
+    $syncHash.Gui.TB_NetMask.IsEnabled   = $false
+    $syncHash.Gui.TB_CIDR.IsEnabled      = $false
+    $syncHash.Gui.TB_Threshold.IsEnabled = $false
+    $syncHash.Gui.RB_Mask.IsEnabled      = $false
+    $syncHash.Gui.RB_CIDR.IsEnabled      = $false
+    $syncHash.Gui.CB_More.IsEnabled      = $false
+    $syncHash.Gui.CB_ARP.IsEnabled       = $false
+    $syncHash.Gui.BTN_Scan.IsEnabled     = $false
+    $syncHash.Gui.BTN_About.IsEnabled    = $false
+    $syncHash.Gui.BTN_PsAbout.IsEnabled  = $false
+    $syncHash.Gui.BTN_Exit.IsEnabled     = $false
+    $syncHash.Gui.BTN_PSExit.IsEnabled   = $false
+    $syncHash.Gui.TB_Delay.IsEnabled     = $false
+    $syncHash.Gui.CB_CC.IsEnabled        = $false
+    $syncHash.Gui.TB_SP.IsEnabled        = $false
+    $syncHash.Gui.TB_EP.IsEnabled        = $false
+    $syncHash.Gui.CB_SOO.IsEnabled       = $false
+    $syncHash.Gui.BTN_ScanPort.IsEnabled = $false
+    $syncHash.Gui.BTN_Sweep.IsEnabled = $false
+    $syncHash.Gui.TB_Sweep.IsEnabled     = $false
+
+    # create the extra Powershell session and add the script block to execute
+    $Session = [PowerShell]::Create().AddScript($syncHash.PortSweep_scriptblock).AddArgument($range.Start).AddArgument($range.end).AddArgument($threshold).AddArgument($ports).AddArgument($ps7.IsPresent)
+    # execute the code in this session
+    $Session.RunspacePool = $RunspacePool
+    $Handle = $Session.BeginInvoke()
+    $syncHash.Jobs.Add([PSCustomObject]@{
+        'Session' = $Session
+        'Handle' = $Handle
+    })
+    [System.GC]::Collect()
+
+    # start progressbar animation
+    $syncHash.Gui.PB.IsIndeterminate = $true
+})
 # Set IPAddress focused when script starts
 $syncHash.Gui.TB_IPAddress.Template.FindName("PART_EditableTextBox", $syncHash.Gui.TB_IPAddress)
 
