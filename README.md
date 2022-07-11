@@ -46,7 +46,7 @@ PSScanner.ps1  : Requires Windows Powershell 5+ with PSParallel module installed
 
 PSScanner7.ps1  : Requires Powershell Core 7+, no dependent module required (Obsolete, please use PSScanner.ps1 with -ps7 switch enabled)
 
-Contributions : Pull requests and/or suggestions are more than welcome.
+Contributions : Pull requests and/or suggestions are more than welcome. Currently there is no progress bar implemented for the native multi-threading. I would appreciate it if someone can add to it.
 
 Screenshot:
 
