@@ -3,7 +3,7 @@
 PSScanner is made for IT administrators to scan corporate network, showing IP address, hostname, current logon user and serial number for all connected computers.
 It is a WPF application written in Powershell.
 
-Featuring ICMP scan and ARP scan, PSScanner can scan the whole network in a fast speed.
+Featuring ICMP/ARP scan and TCP port scan/sweep, PSScanner can scan the whole subnet in a fast speed.
 
 Logon user query method: Windows query command
 
