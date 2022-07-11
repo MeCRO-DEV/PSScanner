@@ -24,7 +24,7 @@ This project can be a template for any Powershell/WPF application development.
 3) A good producer/consumer model implementation using Concurrent Queue Collection from .Net, it is thread safe.
 4) Utilizing Mutex to protect shared variables
 5) Designing UI by directly editing xaml file, no UI designer software required (Visual Studio, etc.)
-6) Handling custom defined events
+6) Handling custom defined events, passing data between different threads with Powershell engine events
 
 Usage:
 
