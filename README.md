@@ -45,10 +45,13 @@ Contributions : Pull requests and/or suggestions are more than welcome. Currentl
 Screenshot:
 1. IP Scan
 ![image](https://user-images.githubusercontent.com/57880343/188029021-f4e9d8f0-917d-429a-8d8d-52457fbbc10a.png)
+![image](https://user-images.githubusercontent.com/57880343/188029887-4b086c93-5a37-4c3b-a5d8-8e3d57295fe9.png)
 2. Port Sweep
 ![image](https://user-images.githubusercontent.com/57880343/188029191-e77bdf70-ff7c-463d-b859-2bf93cc80afe.png)
+![image](https://user-images.githubusercontent.com/57880343/188030046-6fd40cc9-0bc9-45ed-81fa-a7a91a59c331.png)
 2. Port Scan
 ![image](https://user-images.githubusercontent.com/57880343/188029434-3236fa0e-cd1f-4da9-be64-9c53c4c38cc8.png)
+![image](https://user-images.githubusercontent.com/57880343/188030296-898d7cfa-779b-4bfd-b002-ca006caaf57c.png)
 
 Due to scanning WAN IP, this screenshot only shows IP address.
 
