@@ -122,116 +122,120 @@ Set-StrictMode -Version Latest
             </Style>
         </Window.Resources>
         <Grid Background="DarkCyan" HorizontalAlignment="Left" Width="1024">
-            <Canvas x:Name="cv_ipscan" Background="Gray">
-                <TextBox x:Name="TB_IPAddress" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="4,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center" ToolTip="Any IP in the target subnet"/>
-                <TextBlock IsHitTestVisible="False" Text="IP Address" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="12,10,0,0" Foreground="DarkGray">
-                    <TextBlock.Style>
-                        <Style TargetType="{x:Type TextBlock}">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Text, ElementName=TB_IPAddress}" Value="">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-                <TextBox x:Name="TB_NetMask" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="206,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center" ToolTip="Minimum [255.0.0.0]"/>
-                <TextBlock IsHitTestVisible="False" Text="Subnet Mask" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" Foreground="DarkGray">
-                    <TextBlock.Style>
-                        <Style TargetType="{x:Type TextBlock}">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Text, ElementName=TB_NetMask}" Value="">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-                <TextBox x:Name="TB_CIDR" Text="24" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="408,4,0,0" VerticalAlignment="Top" Width="50" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="2" Background="LightYellow" TextAlignment="Center" ToolTip="CIDR [8-31]"/>
-                <TextBlock IsHitTestVisible="False" Text="CIDR" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="412,10,0,0" Foreground="DarkGray">
-                    <TextBlock.Style>
-                        <Style TargetType="{x:Type TextBlock}">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Text, ElementName=TB_CIDR}" Value="">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-                <TextBox x:Name="TB_Threshold" Text="128" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="460,4,0,0" VerticalAlignment="Top" Width="60" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="3" Background="LightYellow" TextAlignment="Center" ToolTip="Runspacepool capacity [1-128]"/>
-                <TextBlock IsHitTestVisible="False" Text="Threshold" FontFamily="Courier New" FontSize="10" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="462,14,0,0" Foreground="DarkGray">
-                    <TextBlock.Style>
-                        <Style TargetType="{x:Type TextBlock}">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Text, ElementName=TB_Threshold}" Value="">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-                <RadioButton x:Name="RB_Mask" Content="Mask" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="522,10,0,0" VerticalAlignment="Top" Width="70" Foreground="Cyan" ToolTip="Use subnet mask"/>
-                <RadioButton x:Name="RB_CIDR" Content="CIDR" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="594,10,0,0" VerticalAlignment="Top" Width="70" Foreground="Cyan" ToolTip="Use CIDR"/>
-                <CheckBox x:Name="CB_More" Content="More" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="666,10,0,0"  VerticalAlignment="Top" Width="70" Foreground="Lime" ToolTip="Show logon user and serial number"/>
-                <CheckBox x:Name="CB_ARP" Content="ARP" FontFamily="Courier New" FontSize="20" HorizontalAlignment="Left" Height="24" Margin="738,10,0,0"  VerticalAlignment="Top" Width="70" Foreground="DarkOrange" ToolTip="Use ARP request"/>
-                <TextBox x:Name="TB_Delay" Text="2" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="798,4,0,0" VerticalAlignment="Top" Width="27" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="1" Background="LightYellow" TextAlignment="Center" ToolTip="ARP Ping Delay (0-9ms)"/>
-                <CheckBox x:Name="CB_CC" Content="" FontFamily="Courier New" FontSize="40" HorizontalAlignment="Left" Height="60" Margin="830,10,0,0"  VerticalAlignment="Top" Width="60" Foreground="DarkOrange" ToolTip="Clear ARP cache before scanning, local admin required."/>
-                <Button x:Name="BTN_Scan" Content="Scan" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="851,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnLime}" ToolTip="Start port scan."/>
-                <Button x:Name="BTN_Exit" Content="Exit" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="913,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnBrown}"/>
-                <Button x:Name="BTN_About" Content="" FontFamily="Courier New" FontSize="15" HorizontalAlignment="Left" Height="30" Margin="975,4,0,0" VerticalAlignment="Top" Width="35" Foreground="Yellow" Style="{StaticResource btnGreen}" ToolTip="Help"/>
-            </Canvas>
-            <Canvas x:Name="cv_portscan" Background="Gray">
-                <TextBox x:Name="TB_SP" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="4,4,0,0" VerticalAlignment="Top" Width="100" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="5" Background="LightYellow" TextAlignment="Center" ToolTip="Starting Port#"/>
-                <TextBlock IsHitTestVisible="False" Text="Start Port" FontFamily="Courier New" FontSize="12" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="16,15,0,0" Foreground="DarkGray">
-                    <TextBlock.Style>
-                        <Style TargetType="{x:Type TextBlock}">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Text, ElementName=TB_SP}" Value="">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-                <TextBox x:Name="TB_EP" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="104,4,0,0" VerticalAlignment="Top" Width="100" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="5" Background="LightYellow" TextAlignment="Center" ToolTip="Ending Port#"/>
-                <TextBlock IsHitTestVisible="False" Text="End Port" FontFamily="Courier New" FontSize="12" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="126,15,0,0" Foreground="DarkGray">
-                    <TextBlock.Style>
-                        <Style TargetType="{x:Type TextBlock}">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Text, ElementName=TB_EP}" Value="">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-                <CheckBox x:Name="CB_SOO" Content="Show Open&#10;Ports Only" FontFamily="Courier New" FontSize="11" HorizontalAlignment="Left" Height="24" Margin="208,6,0,0"  VerticalAlignment="Center" Width="86" Foreground="Lime" ToolTip="Show open ports only, no effect with port sweeping and IP scanning."/>
-                <TextBox x:Name="TB_Sweep" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="300,4,0,0" VerticalAlignment="Top" Width="470" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="38" Background="LightYellow" TextAlignment="Left" ToolTip="Ports List, seperated by commas"/>
-                <TextBlock IsHitTestVisible="False" Text="Port sweep list" FontFamily="Courier New" FontSize="20" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="304,8,0,0" Foreground="DarkGray">
-                    <TextBlock.Style>
-                        <Style TargetType="{x:Type TextBlock}">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Text, ElementName=TB_Sweep}" Value="">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-                <Button x:Name="BTN_Sweep" Content="Sweep" FontFamily="Courier New" FontSize="18" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="772,4,0,0" VerticalAlignment="Top" Width="80" Foreground="Blue" Style="{StaticResource btnLime}" ToolTip="TCP sweeping, it shows open ports only."/>
-                <Button x:Name="BTN_ScanPort" Content="Scan" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="853,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnLime}" ToolTip="Ports scan"/>
-                <Button x:Name="BTN_PsExit" Content="Exit" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="914,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnBrown}"/>
-                <Button x:Name="BTN_PsAbout" Content="" FontFamily="Courier New" FontSize="15" HorizontalAlignment="Left" Height="30" Margin="975,4,0,0" VerticalAlignment="Top" Width="35" Foreground="Yellow" Style="{StaticResource btnGreen}" ToolTip="Help"/>
-            </Canvas>
-            <RichTextBox x:Name="RTB_Output" FontFamily="Courier New" FontSize="18" HorizontalAlignment="Left" Height="668" Margin="4,36,0,0" VerticalAlignment="Top" Width="1006" Background="Black" Foreground="LightGreen" IsReadOnly="true" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible" MaxWidth="4096">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel Orientation="Vertical">
+                    <Canvas>
+                        <TextBox x:Name="TB_IPAddress" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="4,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center" ToolTip="Any IP in the target subnet"/>
+                        <TextBlock IsHitTestVisible="False" Text="IP Address" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="12,10,0,0" Foreground="DarkGray">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=TB_IPAddress}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBox x:Name="TB_NetMask" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="206,4,0,0" VerticalAlignment="Top" Width="200" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="15" Background="LightYellow" TextAlignment="Center" ToolTip="Minimum [255.0.0.0]"/>
+                        <TextBlock IsHitTestVisible="False" Text="Subnet Mask" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" Foreground="DarkGray">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=TB_NetMask}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBox x:Name="TB_CIDR" Text="24" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="408,4,0,0" VerticalAlignment="Top" Width="50" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="2" Background="LightYellow" TextAlignment="Center" ToolTip="CIDR [8-31]"/>
+                        <TextBlock IsHitTestVisible="False" Text="CIDR" FontFamily="Courier New" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="412,10,0,0" Foreground="DarkGray">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=TB_CIDR}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBox x:Name="TB_Threshold" Text="128" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="460,4,0,0" VerticalAlignment="Top" Width="60" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="3" Background="LightYellow" TextAlignment="Center" ToolTip="Runspacepool capacity [1-128]"/>
+                        <TextBlock IsHitTestVisible="False" Text="Threshold" FontFamily="Courier New" FontSize="10" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="462,14,0,0" Foreground="DarkGray">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=TB_Threshold}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Canvas>
+                    <Canvas Margin="0,34,0,0">
+                        <TextBox x:Name="TB_SP" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="4,4,0,0" VerticalAlignment="Top" Width="100" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="5" Background="LightYellow" TextAlignment="Center" ToolTip="Starting Port#"/>
+                        <TextBlock IsHitTestVisible="False" Text="Start Port" FontFamily="Courier New" FontSize="12" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="16,15,0,0" Foreground="DarkGray">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=TB_SP}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBox x:Name="TB_EP" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="104,4,0,0" VerticalAlignment="Top" Width="100" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="5" Background="LightYellow" TextAlignment="Center" ToolTip="Ending Port#"/>
+                        <TextBlock IsHitTestVisible="False" Text="End Port" FontFamily="Courier New" FontSize="12" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="126,15,0,0" Foreground="DarkGray">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=TB_EP}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBox x:Name="TB_Sweep" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="206,4,0,0" VerticalAlignment="Top" Width="314" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="38" Background="LightYellow" TextAlignment="Left" ToolTip="Ports List, seperated by commas"/>
+                        <TextBlock IsHitTestVisible="False" Text="Port sweep list" FontFamily="Courier New" FontSize="12" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="220,15,0,0" Foreground="DarkGray">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=TB_Sweep}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Canvas>
+                </StackPanel>
+                <Canvas>
+                    <RadioButton x:Name="RB_Mask" Content="Mask" FontFamily="Courier New" FontSize="18" HorizontalAlignment="Left" Height="24" Margin="522,10,0,0" VerticalAlignment="Top" Width="70" Foreground="Cyan" ToolTip="Use subnet mask"/>
+                    <RadioButton x:Name="RB_CIDR" Content="CIDR" FontFamily="Courier New" FontSize="18" HorizontalAlignment="Left" Height="24" Margin="522,30,0,0" VerticalAlignment="Top" Width="70" Foreground="Cyan" ToolTip="Use CIDR"/>
+                    <CheckBox x:Name="CB_More" Content="More" FontFamily="Courier New" FontSize="18" HorizontalAlignment="Left" Height="24" Margin="522,50,0,0"  VerticalAlignment="Top" Width="70" Foreground="Lime" ToolTip="Show logon user and serial number"/>
+                    <CheckBox x:Name="CB_ARP" Content="ARP" FontFamily="Courier New" FontSize="18" HorizontalAlignment="Left" Height="24" Margin="596,10,0,0"  VerticalAlignment="Top" Width="70" Foreground="DarkOrange" ToolTip="Use ARP request"/>
+                    <CheckBox x:Name="CB_CC" Content="Clear" FontFamily="Courier New" FontSize="18" HorizontalAlignment="Left" Height="24" Margin="596,30,0,0"  VerticalAlignment="Top" Width="76" Foreground="DarkOrange" ToolTip="Clear ARP cache before scanning, local admin required."/>
+                    <TextBox x:Name="TB_Delay" Text="2" FontFamily="Courier New" FontSize="18" FontWeight="Bold" HorizontalAlignment="Left" Height="20" Margin="596,50,0,0" VerticalAlignment="Top" Width="76" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="1" Background="LightYellow" TextAlignment="Center" ToolTip="ARP Ping Delay (0-9ms)"/>
+                    <CheckBox x:Name="CB_SOO" Content="Show Open&#10;Ports Only" FontFamily="Courier New" FontSize="11" HorizontalAlignment="Left" Height="24" Margin="676,10,0,0"  VerticalAlignment="Center" Width="86" Foreground="Lime" ToolTip="Show open ports only, no effect with port sweeping and IP scanning."/>
+                    <Button x:Name="BTN_Scan" Content="IPScan" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="768,4,0,0" VerticalAlignment="Top" Width="90" Foreground="Blue" Style="{StaticResource btnLime}" ToolTip="Start IP scan."/>
+                    <Button x:Name="BTN_Sweep" Content="Sweep" FontFamily="Courier New" FontSize="18" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="768,38,0,0" VerticalAlignment="Top" Width="90" Foreground="Blue" Style="{StaticResource btnLime}" ToolTip="TCP sweeping, it shows open ports only."/>
+                    <Button x:Name="BTN_ScanPort" Content="Scan" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="860,38,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnLime}" ToolTip="Ports scan"/>
+                    <Button x:Name="BTN_Exit" Content="Exit" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="860,4,0,0" VerticalAlignment="Top" Width="60" Foreground="Blue" Style="{StaticResource btnBrown}"/>
+                    <Button x:Name="BTN_About" Content="" FontFamily="Courier New" FontSize="40" HorizontalAlignment="Left" Height="64" Margin="924,4,0,0" VerticalAlignment="Top" Width="64" Foreground="Yellow" Style="{StaticResource btnGreen}" ToolTip="Help"/>
+                </Canvas>
+            </StackPanel>
+            <RichTextBox x:Name="RTB_Output" FontFamily="Courier New" FontSize="18" HorizontalAlignment="Left" Height="632" Margin="4,72,0,0" VerticalAlignment="Top" Width="1006" Background="Black" Foreground="LightGreen" IsReadOnly="true" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible" MaxWidth="4096">
                 <FlowDocument  PageWidth="4096">
                     <Paragraph>
                         <Run Text=""/>
@@ -294,7 +298,6 @@ $syncHash.Gui.RB_Mask.IsChecked = $false
 $syncHash.Gui.TB_NetMask.IsEnabled = $false
 $syncHash.GUI.TB_Delay.IsEnabled = $false
 $syncHash.Gui.BTN_About.Content = "$emoji_about"
-$syncHash.Gui.BTN_PsAbout.Content = "$emoji_about"
 $syncHash.Gui.CB_CC.IsEnabled    = $false
 $syncHash.Gui.CB_CC.IsChecked    = $true
 $syncHash.Gui.CB_SOO.IsChecked    = $true
@@ -335,9 +338,6 @@ $syncHash.Q = New-Object System.Collections.Concurrent.ConcurrentQueue[psobject]
 $Global:createdNew = $False # Stores Boolean value if the current PowerShell Process gets a lock on the Mutex
 # Create the Mutex Object usin the constructuor -> Mutex Constructor (Boolean, String, Boolean)
 $syncHash.mutex = New-Object -TypeName System.Threading.Mutex($false, "Tom", [ref]$Global:createdNew)
-
-$syncHash.Gui.cv_ipscan.Visibility = [System.Windows.Visibility]::Visible
-$syncHash.Gui.cv_portscan.Visibility = [System.Windows.Visibility]::Hidden
 
 # check if there is any thread still running
 Function isThreadRunning {
@@ -390,9 +390,6 @@ $syncHash.Window.add_closed({
 
 # Exit button clicked
 $syncHash.GUI.BTN_Exit.Add_Click({
-    $syncHash.Window.close()
-})
-$syncHash.GUI.BTN_PSExit.Add_Click({
     $syncHash.Window.close()
 })
 
@@ -506,15 +503,6 @@ $handler_keypress = {
     [string]$key = ($_.key).ToString()
     if($key -match "Escape"){ # ESC to clear output window
         $syncHash.Gui.rtb_Output.Document.Blocks.Clear()
-    }
-    if($key -match "F1"){ # F1 to switch between IP scan and port scan/sweep
-        if($syncHash.Gui.cv_ipscan.Visibility -eq [System.Windows.Visibility]::Visible){
-            $syncHash.Gui.cv_ipscan.Visibility = [System.Windows.Visibility]::Hidden
-            $syncHash.Gui.cv_portscan.Visibility = [System.Windows.Visibility]::Visible
-        }else{
-            $syncHash.Gui.cv_ipscan.Visibility = [System.Windows.Visibility]::Visible
-            $syncHash.Gui.cv_portscan.Visibility = [System.Windows.Visibility]::Hidden
-        }
     }
 }
 $syncHash.Window.add_KeyDown($handler_keypress)
@@ -760,9 +748,7 @@ $syncHash.PostPocess = {
     $event.messagedata[1].Gui.CB_ARP.IsEnabled       = $true
     $event.messagedata[1].Gui.BTN_Scan.IsEnabled     = $true
     $event.messagedata[1].Gui.BTN_About.IsEnabled    = $true
-    $event.messagedata[1].Gui.BTN_PsAbout.IsEnabled  = $true
     $event.messagedata[1].Gui.BTN_Exit.IsEnabled     = $true
-    $event.messagedata[1].Gui.BTN_PSExit.IsEnabled   = $true
     $event.messagedata[1].Gui.TB_SP.IsEnabled        = $true
     $event.messagedata[1].Gui.TB_EP.IsEnabled        = $true
     $event.messagedata[1].Gui.CB_SOO.IsEnabled       = $true
@@ -1423,9 +1409,7 @@ $syncHash.GUI.BTN_Scan.Add_Click({
     $syncHash.Gui.CB_ARP.IsEnabled       = $false
     $syncHash.Gui.BTN_Scan.IsEnabled     = $false
     $syncHash.Gui.BTN_About.IsEnabled    = $false
-    $syncHash.Gui.BTN_PsAbout.IsEnabled  = $false
     $syncHash.Gui.BTN_Exit.IsEnabled     = $false
-    $syncHash.Gui.BTN_PSExit.IsEnabled   = $false
     $syncHash.Gui.TB_Delay.IsEnabled     = $false
     $syncHash.Gui.CB_CC.IsEnabled        = $false
     $syncHash.Gui.TB_SP.IsEnabled        = $false
@@ -1486,8 +1470,6 @@ Function about{
     Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "ESC" -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text " to clear output window" -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "Chartreuse" -Text "  Auto-save sorted result to C:\PSScanner" -NewLine $true
-    Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "F1" -NewLine $false
-    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "  to switch between IP scan and Port scan/sweep" -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "Switch -ps7" -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "  to use native method for multi-threading on Powershell Core 7+" -NewLine $true
 
@@ -1518,9 +1500,6 @@ Function about{
 
 # Handle ? button press
 $syncHash.Gui.BTN_About.add_click({
-    about
-})
-$syncHash.Gui.BTN_PsAbout.add_click({
     about
 })
 
@@ -1816,9 +1795,7 @@ $syncHash.GUI.BTN_ScanPort.Add_Click({
     $syncHash.Gui.CB_ARP.IsEnabled       = $false
     $syncHash.Gui.BTN_Scan.IsEnabled     = $false
     $syncHash.Gui.BTN_About.IsEnabled    = $false
-    $syncHash.Gui.BTN_PsAbout.IsEnabled  = $false
     $syncHash.Gui.BTN_Exit.IsEnabled     = $false
-    $syncHash.Gui.BTN_PSExit.IsEnabled   = $false
     $syncHash.Gui.TB_Delay.IsEnabled     = $false
     $syncHash.Gui.CB_CC.IsEnabled        = $false
     $syncHash.Gui.TB_SP.IsEnabled        = $false
@@ -2262,9 +2239,7 @@ $syncHash.GUI.BTN_Sweep.Add_Click({
     $syncHash.Gui.CB_ARP.IsEnabled       = $false
     $syncHash.Gui.BTN_Scan.IsEnabled     = $false
     $syncHash.Gui.BTN_About.IsEnabled    = $false
-    $syncHash.Gui.BTN_PsAbout.IsEnabled  = $false
     $syncHash.Gui.BTN_Exit.IsEnabled     = $false
-    $syncHash.Gui.BTN_PSExit.IsEnabled   = $false
     $syncHash.Gui.TB_Delay.IsEnabled     = $false
     $syncHash.Gui.CB_CC.IsEnabled        = $false
     $syncHash.Gui.TB_SP.IsEnabled        = $false
