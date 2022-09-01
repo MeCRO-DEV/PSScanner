@@ -44,8 +44,9 @@ Contributions : Pull requests and/or suggestions are more than welcome. Currentl
 
 Screenshot:
 
-![Capture](https://user-images.githubusercontent.com/57880343/115995007-53838780-a58e-11eb-98a3-dbe009c68a9c.PNG)
-![Capture7](https://user-images.githubusercontent.com/57880343/115999428-89316c00-a5a0-11eb-9183-8f4d021cbb72.PNG)
+![image](https://user-images.githubusercontent.com/57880343/188029021-f4e9d8f0-917d-429a-8d8d-52457fbbc10a.png)
+
+
 
 
 Due to scanning WAN IP, this screenshot only shows IP address.
