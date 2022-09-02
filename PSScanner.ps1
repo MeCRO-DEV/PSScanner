@@ -1,14 +1,14 @@
-﻿##########################################################
-# PSScanner
-# ---------
-# Author: David Wang, Jul 2022 V2.0
-# https://github.com/MeCRO-DEV/PSScanner
-# Usage: PSScanner.ps1 [-ps7] [-NoTerminal]
-#        Switch -ps7 indicating you are using Powershell core 7+ and you want to use 
-#        the native Foreach-Object -Parallel. In this case, there is no dependeny needed
-#        Switch -NoTerminal tells the script to hide the terminal window
-#
-##########################################################
+﻿##########################################################################################
+# PSScanner                                                                              #
+# ---------------------------------------------------------------------------------------#
+# Author: David Wang, Jul 2022 V2.0                                                      #
+# https://github.com/MeCRO-DEV/PSScanner                                                 #
+# Usage: PSScanner.ps1 [-ps7] [-NoTerminal]                                              #
+#        Switch -ps7 indicating you are using Powershell core 7+ and you want to use     #
+#        the native Foreach-Object -Parallel. In this case, there is no dependeny needed #
+#        Switch -NoTerminal tells the script to hide the terminal window                 #
+#                                                                                        #
+##########################################################################################
 # The MIT License (MIT)
 #
 # Copyright (c) 2022, David Wang
@@ -39,12 +39,13 @@
 
 param(
     [Parameter()]
-    [switch]$ps7 = $false,
+    [switch]$ps7        = $false,
     [switch]$NoTerminal = $false
 )
 
 Set-StrictMode -Version Latest
 
+# UI XAML
 [xml]$Global:xaml = {
     <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -290,7 +291,7 @@ if($PSVersionTable.PSVersion.Major -lt 7){ # In case you are using Windows Power
         Install-Module -Name PSParallel -Scope AllUsers -Force -Confirm:$false
     }
     Import-Module PSParallel
-} # Otherwise you are using Powershell Core 7 and later
+} # Otherwise you are using Powershell Core 7 or later
 
 $emoji_about  = [char]::ConvertFromUtf32(0x02753) # ❓
 $emoji_box_h  = [char]::ConvertFromUtf32(0x02501) # ━
@@ -317,15 +318,15 @@ $xaml.SelectNodes("//*[@*[contains(translate(name(.),'n','N'),'x:Name')]]") | Fo
 }
 
 # Initialize GUI controls
-$syncHash.Gui.RB_CIDR.IsChecked = $true
-$syncHash.Gui.RB_Mask.IsChecked = $false
+$syncHash.Gui.RB_CIDR.IsChecked    = $true
+$syncHash.Gui.RB_Mask.IsChecked    = $false
 $syncHash.Gui.TB_NetMask.IsEnabled = $false
-$syncHash.GUI.TB_Delay.IsEnabled = $false
-$syncHash.Gui.BTN_About.Content = "$emoji_about"
-$syncHash.Gui.CB_CC.IsEnabled    = $false
-$syncHash.Gui.CB_CC.IsChecked    = $true
-$syncHash.Gui.CB_SOO.IsChecked    = $true
-$syncHash.Gui.SB.Text = $env:USERDNSDOMAIN + '\' + $env:USERNAME + ' | ' + $env:COMPUTERNAME + ' | ' + $env:NUMBER_OF_PROCESSORS + ' CPU Core(s)'
+$syncHash.GUI.TB_Delay.IsEnabled   = $false
+$syncHash.Gui.BTN_About.Content    = "$emoji_about"
+$syncHash.Gui.CB_CC.IsEnabled      = $false
+$syncHash.Gui.CB_CC.IsChecked      = $true
+$syncHash.Gui.CB_SOO.IsChecked     = $true
+$syncHash.Gui.SB.Text              = $env:USERDNSDOMAIN + '\' + $env:USERNAME + ' | ' + $env:COMPUTERNAME + ' | ' + $env:NUMBER_OF_PROCESSORS + ' CPU Core(s)'
 
 # Test if you have local admin rignt
 $user = [Security.Principal.WindowsIdentity]::GetCurrent();
@@ -360,6 +361,7 @@ $syncHash.Q = New-Object System.Collections.Concurrent.ConcurrentQueue[psobject]
 
 # Global mutex for accessing shared resources in threads
 $Global:createdNew = $False # Stores Boolean value if the current PowerShell Process gets a lock on the Mutex
+
 # Create the Mutex Object usin the constructuor -> Mutex Constructor (Boolean, String, Boolean)
 $syncHash.mutex = New-Object -TypeName System.Threading.Mutex($false, "Tom", [ref]$Global:createdNew)
 
@@ -529,6 +531,7 @@ $handler_keypress = {
         $syncHash.Gui.rtb_Output.Document.Blocks.Clear()
     }
 }
+
 $syncHash.Window.add_KeyDown($handler_keypress)
 
 # Show output in UI thread
@@ -1012,7 +1015,7 @@ $syncHash.scan_scriptblock = {
         }
 
         # UDP probing worker thread
-        $ArpScriptBlock = { # Thread to send out UDP requests. When the IP is not in local arp cache, OS will send arp request broadcast, then the local arp cache is built.
+        $ArpScriptBlock = { # Thread to send out UDP requests. When the IP is not in local ARP cache, OS will send arp request broadcast, then the local arp cache is built.
             $ASCIIEncoding = New-Object System.Text.ASCIIEncoding
             $Bytes = $ASCIIEncoding.GetBytes("a")
             $UDP = New-Object System.Net.Sockets.Udpclient
@@ -1146,7 +1149,7 @@ $syncHash.scan_scriptblock = {
     # I feel really stupid here. Please don't blame on me to duplicate the code, but I have no choice
     # I can't pass any parameters into the thread, so not able to dertermin if the -ps7 switch is given
     # inside the thread
-    # Forking worker threads using PSParallel or ForEach-Object -Parallel
+    # Forking worker threads using PSParallel (Externel Module) or ForEach-Object -Parallel (Powershell Core Native)
     if($ps7){
         $ips | ForEach-Object -ThrottleLimit $threshold -Parallel { # test/query worker threads
             [bool]$test  = $false
@@ -2244,7 +2247,7 @@ $syncHash.GUI.BTN_Sweep.Add_Click({
     $msg = "End IP    : " + $range.end
     Show-Result -Font "Courier New" -Size "18" -Color "Cyan" -Text $msg -NewLine $true
 
-    if($ps7.IsPresent){
+    if($ps7){
         $w = "(Native)"
     } else {
         $w = "(Module)"
@@ -2301,7 +2304,7 @@ $syncHash.window.add_Loaded({
 })
 
 # Entering main message loop
-if(!$NoTerminal) {
+if(!($NoTerminal.IsPresent)) {
     $syncHash.window.ShowDialog() | Out-Null
 } else {
     if ($host.name -ne "ConsoleHost")
