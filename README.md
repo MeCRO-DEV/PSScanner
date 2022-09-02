@@ -10,6 +10,7 @@ It is a WPF application written in Powershell.
 5. Arp clear cache: Local admin right required
 6. Port scan/sweep
 7. Intergrated PS7+ native multi-threading with ForEach-Object -Parallel (-ps7 switch will turn it on. PSScanner7.ps1 is obsolete)
+8. Hide the terminal window with switch -NoTerminal
 
 This project can be a template for any Powershell/WPF application development.
 
