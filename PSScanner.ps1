@@ -3,9 +3,10 @@
 # ---------
 # Author: David Wang, Jul 2022 V2.0
 # https://github.com/MeCRO-DEV/PSScanner
-# Usage: PSScanner.ps1 [-ps7]
+# Usage: PSScanner.ps1 [-ps7] [-NoTerminal]
 #        Switch -ps7 indicating you are using Powershell core 7+ and you want to use 
 #        the native Foreach-Object -Parallel. In this case, there is no dependeny needed
+#        Switch -NoTerminal tells the script to hide the terminal window
 #
 ##########################################################
 # The MIT License (MIT)
