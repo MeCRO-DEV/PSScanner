@@ -38,7 +38,8 @@
 
 param(
     [Parameter()]
-    [switch]$ps7 = $false
+    [switch]$ps7 = $false,
+    [switch]$NoTerminal = $false
 )
 
 Set-StrictMode -Version Latest
@@ -1472,6 +1473,8 @@ Function about{
     Show-Result -Font "Courier New" -Size "18" -Color "Chartreuse" -Text "  Auto-save sorted result to C:\PSScanner" -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "Switch -ps7" -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "  to use native method for multi-threading on Powershell Core 7+" -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "Switch -NoTerminal" -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "  To hide terminal window." -NewLine $true
 
     for($i=0;$i -lt 65; $i++){
         if($i -eq 64) {$nl = $true} else {$nl = $false}
@@ -2267,4 +2270,19 @@ $syncHash.GUI.BTN_Sweep.Add_Click({
 $syncHash.Gui.TB_IPAddress.Template.FindName("PART_EditableTextBox", $syncHash.Gui.TB_IPAddress)
 
 # Entering main message loop
-$syncHash.window.ShowDialog() | Out-Null
+if(!$NoTerminal) {
+    $syncHash.window.ShowDialog() | Out-Null
+} else {
+    if ($host.name -ne "ConsoleHost")
+    {
+        $null = $syncHash.window.Dispatcher.InvokeAsync{$syncHash.Window.ShowDialog()}.Wait()
+    } else {
+        $windowcode = '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);'
+        $asyncwindow = Add-Type -MemberDefinition $windowcode -Name Win32ShowWindowAsync -Namespace Win32Functions -PassThru
+        $null = $asyncwindow::ShowWindowAsync((Get-Process -PID $pid).MainWindowHandle, 0)
+ 
+        $app = New-Object -TypeName Windows.Application
+        $app.Run($syncHash.Window)
+    }
+}
+
