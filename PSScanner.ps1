@@ -64,7 +64,7 @@ Set-StrictMode -Version Latest
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="5" BorderThickness="1" Padding="5" BorderBrush="#000">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="15" BorderThickness="1" Padding="5" BorderBrush="#000">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
                                 </ContentPresenter>
                             </Border>
@@ -86,7 +86,7 @@ Set-StrictMode -Version Latest
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="5" BorderThickness="1" Padding="5" BorderBrush="#000">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="15" BorderThickness="1" Padding="5" BorderBrush="#000">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
                                 </ContentPresenter>
                             </Border>
@@ -109,7 +109,7 @@ Set-StrictMode -Version Latest
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="5" BorderThickness="1" Padding="5" BorderBrush="#000">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="50" BorderThickness="1" Padding="5" BorderBrush="#000">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
                                 </ContentPresenter>
                             </Border>
@@ -119,7 +119,7 @@ Set-StrictMode -Version Latest
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Background" Value="Green"/>
-                        <Setter Property="Foreground" Value="#fff"/>
+                        <Setter Property="Foreground" Value="#FFF"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -131,7 +131,7 @@ Set-StrictMode -Version Latest
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="5" BorderThickness="1" Padding="5" BorderBrush="#000">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="15" BorderThickness="1" Padding="5" BorderBrush="#000">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
                                 </ContentPresenter>
                             </Border>
@@ -253,11 +253,11 @@ Set-StrictMode -Version Latest
                     <CheckBox x:Name="CB_CC" Content="Clear" FontFamily="Courier New" FontSize="18" HorizontalAlignment="Left" Height="24" Margin="596,30,0,0"  VerticalAlignment="Top" Width="76" Foreground="DarkOrange" ToolTip="Clear ARP cache before scanning, local admin required."/>
                     <TextBox x:Name="TB_Delay" Text="2" FontFamily="Courier New" FontSize="18" FontWeight="Bold" HorizontalAlignment="Left" Height="20" Margin="596,50,0,0" VerticalAlignment="Top" Width="76" Foreground="DarkBlue" VerticalContentAlignment="Center" MaxLength="1" Background="LightYellow" TextAlignment="Center" ToolTip="ARP Ping Delay (0-9ms)"/>
                     <CheckBox x:Name="CB_SOO" Content="Show Open&#10;Ports Only" FontFamily="Courier New" FontSize="11" HorizontalAlignment="Left" Height="24" Margin="676,10,0,0"  VerticalAlignment="Center" Width="86" Foreground="Yellow" ToolTip="Show open ports only, no effect with port sweeping and IP scanning."/>
-                    <Button x:Name="BTN_Scan" Content="IPScan" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="768,4,0,0" VerticalAlignment="Top" Width="90" Foreground="Blue" Style="{StaticResource btnOrange}" ToolTip="Start IP scan."/>
+                    <Button x:Name="BTN_Scan" Content="IPScan" FontFamily="Courier New" FontSize="18" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="768,4,0,0" VerticalAlignment="Top" Width="90" Foreground="Blue" Style="{StaticResource btnOrange}" ToolTip="IP scan."/>
                     <Button x:Name="BTN_Sweep" Content="Sweep" FontFamily="Courier New" FontSize="18" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="768,38,0,0" VerticalAlignment="Top" Width="90" Foreground="Blue" Style="{StaticResource btnLime}" ToolTip="TCP sweeping, it shows open ports only."/>
-                    <Button x:Name="BTN_ScanPort" Content="Scan" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="860,38,0,0" VerticalAlignment="Top" Width="80" Foreground="Blue" Style="{StaticResource btnLime}" ToolTip="Ports scan"/>
-                    <Button x:Name="BTN_Exit" Content="Exit" FontFamily="Courier New" FontSize="20" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="860,4,0,0" VerticalAlignment="Top" Width="80" Foreground="Blue" Style="{StaticResource btnBrown}"/>
-                    <Button x:Name="BTN_About" Content="" FontFamily="Courier New" FontSize="40" HorizontalAlignment="Left" Height="64" Margin="945,4,0,0" VerticalAlignment="Top" Width="64" Foreground="Yellow" Style="{StaticResource btnGreen}" ToolTip="Help"/>
+                    <Button x:Name="BTN_ScanPort" Content="Scan" FontFamily="Courier New" FontSize="18" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="860,38,0,0" VerticalAlignment="Top" Width="80" Foreground="Blue" Style="{StaticResource btnLime}" ToolTip="Ports scan"/>
+                    <Button x:Name="BTN_Exit" Content="Exit" FontFamily="Courier New" FontSize="18" FontWeight="Bold" HorizontalAlignment="Left" Height="30" Margin="860,4,0,0" VerticalAlignment="Top" Width="80" Foreground="Blue" Style="{StaticResource btnBrown}" ToolTip="Exit"/>
+                    <Button x:Name="BTN_About" Content="" FontFamily="Courier New" FontSize="40" HorizontalAlignment="Left" Height="64" Margin="945,4,0,0" VerticalAlignment="Top" Width="64" Foreground="Orange" Style="{StaticResource btnGreen}" ToolTip="About PSScanner"/>
                 </Canvas>
             </StackPanel>
             <RichTextBox x:Name="RTB_Output" FontFamily="Courier New" FontSize="18" HorizontalAlignment="Left" Height="632" Margin="4,72,0,0" VerticalAlignment="Top" Width="1006" Background="Black" Foreground="LightGreen" IsReadOnly="true" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible" MaxWidth="4096">
@@ -293,7 +293,7 @@ if($PSVersionTable.PSVersion.Major -lt 7){ # In case you are using Windows Power
     Import-Module PSParallel
 } # Otherwise you are using Powershell Core 7 or later
 
-$emoji_about  = [char]::ConvertFromUtf32(0x02753) # ❓
+$emoji_about  = [char]::ConvertFromUtf32(0x1F383) # 🎃
 $emoji_box_h  = [char]::ConvertFromUtf32(0x02501) # ━
 
 # Loading WPF assemblies 
