@@ -1,4 +1,56 @@
-﻿##########################################################################################
+﻿<#PSScriptInfo
+
+.VERSION 2.0
+
+.GUID 0f9b378a-a4a6-4261-b7af-4efeb1d458b4
+
+.AUTHOR David Wang
+
+.COMPANYNAME MeCRO
+
+.COPYRIGHT David Wang
+
+.TAGS
+
+.LICENSEURI
+
+.PROJECTURI
+
+.ICONURI
+
+.EXTERNALMODULEDEPENDENCIES
+
+.REQUIREDSCRIPTS
+
+.EXTERNALSCRIPTDEPENDENCIES
+
+.RELEASENOTES
+
+
+#>
+
+<#
+
+.DESCRIPTION
+ PSScanner is made for IT administrators to scan corporate network, showing IP address, hostname, current logon user and serialnumber for all connected computers. It is a WPF application written in Powershell; it depents on PSParallel module for multi-threaded scan. 
+#
+#>
+# ┌─────────────────────────────────────────┐
+# │ ______  ___    _______________________  │
+# │ ___   |/  /______  ____/__  __ \_  __ \ │
+# │ __  /|_/ /_  _ \  /    __  /_/ /  / / / │
+# │ _  /  / / /  __/ /___  _  _, _// /_/ /  │
+# │ /_/  /_/  \___/\____/  /_/ |_| \____/   │
+# └─────────────────────────────────────────┘
+# ┌────────────────────────────────────────────────────────────────┐
+# │ _______________________                                        │
+# │ ___  __ \_  ___/_  ___/___________ ___________________________ │
+# │ __  /_/ /____ \_____ \_  ___/  __ `/_  __ \_  __ \  _ \_  ___/ │
+# │ _  ____/____/ /____/ // /__ / /_/ /_  / / /  / / /  __/  /     │
+# │ /_/     /____/ /____/ \___/ \__,_/ /_/ /_//_/ /_/\___//_/      │
+# └────────────────────────────────────────────────────────────────┘                                                      
+#
+##########################################################################################
 # PSScanner                                                                              #
 # ---------------------------------------------------------------------------------------#
 # Author: David Wang, Jul 2022 V2.0                                                      #
@@ -326,7 +378,29 @@ $syncHash.Gui.BTN_About.Content    = "$emoji_about"
 $syncHash.Gui.CB_CC.IsEnabled      = $false
 $syncHash.Gui.CB_CC.IsChecked      = $true
 $syncHash.Gui.CB_SOO.IsChecked     = $true
-$syncHash.Gui.SB.Text              = $env:USERDNSDOMAIN + '\' + $env:USERNAME + ' | ' + $env:COMPUTERNAME + ' | ' + $env:NUMBER_OF_PROCESSORS + ' CPU Core(s)'
+$HyperThreading =  Get-WmiObject -class Win32_processor | Select-Object NumberOfCores,NumberOfLogicalProcessors
+[string]$HyperThreadingEnabled = ""
+[int]$NumberOfCores = 0
+[int]$NumberOfLogicalProcessors = 0
+if($HyperThreading.gettype().name -like '*Object`[`]*'){
+    if($HyperThreading[0].NumberOfLogicalProcessors -gt $HyperThreading[0].NumberOfCores){
+        [string]$HyperThreadingEnabled = "Hyper-Threading"
+    } else {
+        [string]$HyperThreadingEnabled = ""
+    }
+    $NumberOfCores = $HyperThreading[0].NumberOfCores
+    $NumberOfLogicalProcessors = $HyperThreading[0].NumberOfLogicalProcessors
+} else {
+    if($HyperThreading.NumberOfLogicalProcessors -gt $HyperThreading.NumberOfCores){
+        [string]$HyperThreadingEnabled = "Hyper-Threading"
+    } else {
+        [string]$HyperThreadingEnabled = ""
+    }
+    $NumberOfCores = $HyperThreading.NumberOfCores
+    $NumberOfLogicalProcessors = $HyperThreading.NumberOfLogicalProcessors
+}
+
+$syncHash.Gui.SB.Text              = $env:USERDNSDOMAIN + '\' + $env:USERNAME + ' | ' + $env:COMPUTERNAME + ' | ' + $NumberOfCores + ' CPU Core(s)' + ' | ' + $NumberOfLogicalProcessors + ' Thread(s)' + ' | ' + $HyperThreadingEnabled
 
 # Test if you have local admin rignt
 $user = [Security.Principal.WindowsIdentity]::GetCurrent();
