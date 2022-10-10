@@ -378,18 +378,20 @@ $syncHash.Gui.BTN_About.Content    = "$emoji_about"
 $syncHash.Gui.CB_CC.IsEnabled      = $false
 $syncHash.Gui.CB_CC.IsChecked      = $true
 $syncHash.Gui.CB_SOO.IsChecked     = $true
-$HyperThreading =  Get-WmiObject -class Win32_processor | Select-Object NumberOfCores,NumberOfLogicalProcessors
+$HyperThreading =  Get-CimInstance -class Win32_processor | Select-Object NumberOfCores,NumberOfLogicalProcessors
 [string]$HyperThreadingEnabled = ""
 [int]$NumberOfCores = 0
 [int]$NumberOfLogicalProcessors = 0
 if($HyperThreading.gettype().name -like '*Object`[`]*'){
-    if($HyperThreading[0].NumberOfLogicalProcessors -gt $HyperThreading[0].NumberOfCores){
+    $HyperThreading | ForEach-Object {
+        $NumberOfCores += $_.NumberOfCores
+        $NumberOfLogicalProcessors += $_.NumberOfLogicalProcessors
+    }
+    if($NumberOfLogicalProcessors -gt $NumberOfCores){
         [string]$HyperThreadingEnabled = "Hyper-Threading"
     } else {
         [string]$HyperThreadingEnabled = ""
     }
-    $NumberOfCores = $HyperThreading[0].NumberOfCores
-    $NumberOfLogicalProcessors = $HyperThreading[0].NumberOfLogicalProcessors
 } else {
     if($HyperThreading.NumberOfLogicalProcessors -gt $HyperThreading.NumberOfCores){
         [string]$HyperThreadingEnabled = "Hyper-Threading"
@@ -1191,7 +1193,7 @@ $syncHash.scan_scriptblock = {
                 $msg = $msg.PadRight(49,' ') + $c
                 
                 # WMI remote query serial number, works only when RPC is running on the target
-                $sn = (Get-WmiObject -ComputerName $cn -class win32_bios).SerialNumber
+                $sn = (Get-CimInstance -ComputerName $cn -class win32_bios).SerialNumber
                 if($sn){
                     $msg = $msg.PadRight(69,' ') + $sn                    } 
                 else {
@@ -1281,7 +1283,7 @@ $syncHash.scan_scriptblock = {
                     $msg = $msg.PadRight(49,' ') + $c
                     
                     # WMI remote query serial number, works only when RPC is running on the target
-                    $sn = (Get-WmiObject -ComputerName $cn -class win32_bios).SerialNumber
+                    $sn = (Get-CimInstance -ComputerName $cn -class win32_bios).SerialNumber
                     if($sn){
                         $msg = $msg.PadRight(69,' ') + $sn                    } 
                     else {
