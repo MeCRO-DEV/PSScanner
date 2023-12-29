@@ -13,7 +13,7 @@ It is a WPF application written in Powershell.
 5. Arp clear cache: Local admin right required
 6. Port scan/sweep
 7. Intergrated PS7+ native multi-threading with ForEach-Object -Parallel (-ps7 switch will turn it on. PSScanner7.ps1 is obsolete)
-8. Hide the terminal window with switch -NoTerminal
+8. Show the terminal console with switch -ShowConsole
 
 This project can be a template for any Powershell/WPF application development.
 
@@ -66,7 +66,3 @@ Sorted output file:
 Powershell multi-threading performance comparision:
 
 PSParallel seems faster than ForEach-Object -Parallel. I have scanned a /16 network using both methods, PSparallel used 1:10:28.575 while ForEach-Object used 1:18:33.939. It's about 8 minutes difference.
-
----------------
-![](https://komarev.com/ghpvc/?username=MeCRO-DEV&color=green)
-![](http://mecro.net/psscanner.php)

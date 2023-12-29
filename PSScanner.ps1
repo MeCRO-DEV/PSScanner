@@ -55,10 +55,10 @@
 # ---------------------------------------------------------------------------------------#
 # Author: David Wang, Jul 2022 V2.0                                                      #
 # https://github.com/MeCRO-DEV/PSScanner                                                 #
-# Usage: PSScanner.ps1 [-ps7] [-NoTerminal]                                              #
+# Usage: PSScanner.ps1 [-ps7] [-ShowConsole]                                              #
 #        Switch -ps7 indicating you are using Powershell core 7+ and you want to use     #
 #        the native Foreach-Object -Parallel. In this case, there is no dependeny needed #
-#        Switch -NoTerminal tells the script to hide the terminal window                 #
+#        Switch -ShowConsole tells the script to hide the terminal window                 #
 #                                                                                        #
 ##########################################################################################
 # The MIT License (MIT)
@@ -91,8 +91,8 @@
 
 param(
     [Parameter()]
-    [switch]$ps7        = $false,
-    [switch]$NoTerminal = $false
+    [switch]$ps7         = $false,
+    [switch]$ShowConsole = $false
 )
 
 Set-StrictMode -Version Latest
@@ -1575,8 +1575,8 @@ Function about{
     Show-Result -Font "Courier New" -Size "18" -Color "Chartreuse" -Text "  Auto-save sorted result to C:\PSScanner" -NewLine $true
     Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "Switch -ps7" -NewLine $false
     Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "  to use native method for multi-threading on Powershell Core 7+" -NewLine $true
-    Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "Switch -NoTerminal" -NewLine $false
-    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "  To hide terminal window." -NewLine $true
+    Show-Result -Font "Courier New" -Size "18" -Color "Magenta" -Text "Switch -ShowConsole" -NewLine $false
+    Show-Result -Font "Courier New" -Size "18" -Color "Yellow" -Text "  To show terminal console." -NewLine $true
 
     for($i=0;$i -lt 65; $i++){
         if($i -eq 64) {$nl = $true} else {$nl = $false}
@@ -2379,19 +2379,30 @@ $syncHash.window.add_Loaded({
     $syncHash.window.Icon = $icon
 })
 
+Add-Type -Name Window -Namespace Console -MemberDefinition '
+    [DllImport("Kernel32.dll")] public static extern IntPtr GetConsoleWindow();
+    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
+'
+
+function Show-Console {
+    $consolePtr = [Console.Window]::GetConsoleWindow()
+    [Console.Window]::ShowWindow($consolePtr, 5) | out-null
+}
+
+function Hide-Console {
+    $consolePtr = [Console.Window]::GetConsoleWindow()
+    [Console.Window]::ShowWindow($consolePtr, 0) | out-null
+}
+
 # Entering main message loop
-if(!($NoTerminal.IsPresent)) {
-    $syncHash.window.ShowDialog() | Out-Null
+if ($host.name -ne "ConsoleHost")
+{
+    $null = $syncHash.window.Dispatcher.InvokeAsync{$syncHash.Window.ShowDialog()}.Wait()
 } else {
-    if ($host.name -ne "ConsoleHost")
-    {
-        $null = $syncHash.window.Dispatcher.InvokeAsync{$syncHash.Window.ShowDialog()}.Wait()
+    if ($ShowConsole.IsPresent) {
+        Show-Console
     } else {
-        $windowcode = '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);'
-        $asyncwindow = Add-Type -MemberDefinition $windowcode -Name Win32ShowWindowAsync -Namespace Win32Functions -PassThru
-        $null = $asyncwindow::ShowWindowAsync((Get-Process -PID $pid).MainWindowHandle, 0)
- 
-        $app = New-Object -TypeName Windows.Application
-        $app.Run($syncHash.Window)
+        Hide-Console
     }
+    $syncHash.window.ShowDialog() | Out-Null
 }
